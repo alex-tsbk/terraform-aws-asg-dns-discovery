@@ -1,0 +1,57 @@
+{
+  "editor.renderWhitespace": "all",
+  "files.trimTrailingWhitespace": true,
+  // For which languages indent-rainbow should be activated (if empty it means all).
+  "indentRainbow.includedLanguages": [
+    "python"
+  ],
+  // Using the light mode
+  "indentRainbow.indicatorStyle": "light",
+  // we use a simple 1 pixel wide line
+  "indentRainbow.lightIndicatorStyleLineWidth": 1,
+  "indentRainbow.colors": [
+    "rgba(255,255,64,0.6)",
+    "rgba(127,255,127, 0.6)",
+    "rgba(255,127,255, 0.6)",
+    "rgba(79,236,236, 0.6)",
+  ],
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#3a1494",
+    "titleBar.activeBackground": "#4a197b",
+    "titleBar.activeForeground": "#FEFBFC"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+  },
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.formatAll.terraform": "explicit"
+    }
+  },
+  "black-formatter.args": [
+    "--line-length",
+    "${env:PYTHON_MAX_LINE_LENGTH}"
+  ],
+  "flake8.args": [
+    "--max-line-length=255",
+    "--ignore=E402,F841,F401,E302,E305,W503"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
+  "python.testing.pytestPath": "pytest",
+  "python.testing.cwd": "${workspaceFolder}/src/lambda/tests",
+  // In CI/CD use the pytest.ci.ini file - it'll generate a test report and coverage report
+  "python.testing.pytestArgs": [
+    "-c",
+    "pytest.ini"
+  ],
+  "cSpell.words": [
+    "boto",
+    "devcontainer",
+    "venv"
+  ]
+}

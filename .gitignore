@@ -1,3 +1,6 @@
+# Ingore deployable lambda package
+source/lambda.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -121,7 +124,6 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
 env/
 venv/
 ENV/
@@ -158,3 +160,16 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# Mac crap
+*.DS_Store
+
+# Custom
+# Except the bootstrap files
+.venv/*
+!.venv/activate.ps1
+!.venv/activate.sh
+!.venv/freeze.ps1
+!.venv/init.ps1
+!.venv/init.sh
+!.venv/requirements.txt

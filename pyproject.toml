@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "terraform-aws-asg-dns-discovery"
+version = "0.1.0"
+description = "Terraform AWS plugin allowing to synchronize metadata of EC2 instances launched through AWS Auto Scaling Groups with DNS services like Route53 or Cloudflare."
+authors = ["Alex Tsybouk <tsybouk.alexandr@gmail.com>"]
+license = "Apache License"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+pytest-mock = "^3.12.0"
+isort = "^5.13.2"
+black = "^24.2.0"
+flake8 = "^7.0.0"
+
+[tool.poetry.group.aws.dependencies]
+boto3 = "^1.34.60"
+boto3-stubs = {extras = ["autoscaling", "cloudwatch", "dynamodb", "ec2", "route53", "sts"], version = "^1.34.60"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

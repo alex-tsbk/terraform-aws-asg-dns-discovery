@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "njpwerner.autodocstring",
+        "ms-python.python",
+        "pkief.material-icon-theme",
+        "pjmiravalle.terraform-advanced-syntax-highlighting",
+        "hashicorp.terraform",
+        "oderwat.indent-rainbow",
+        "kevinrose.vsc-python-indent",
+        "ms-python.flake8",
+    ]
+}
