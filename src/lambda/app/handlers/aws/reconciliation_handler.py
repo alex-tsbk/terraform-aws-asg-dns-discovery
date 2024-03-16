@@ -95,7 +95,7 @@ class ReconciliationService:
                     asg_dns_config.record_type,
                     asg_dns_config.record_ttl,
                     asg_dns_config.managed_dns_record,
-                    asg_dns_config.dns_mock_ip,
+                    asg_dns_config.dns_mock_value,
                     ips,
                 )
                 self.logger.debug(f"ASG DNS Config: {asg_dns_config} - extending change request with: {change_request}")
@@ -105,7 +105,7 @@ class ReconciliationService:
             for hosted_zone_id, change_requests in dns_change_sets.items():
                 # Generated lock key for all change requests for the same hosted zone
                 self.logger.info(f"Applying change request for hosted zone: {hosted_zone_id} -> {change_requests}")
-                if reconciliation_config.whatif:
+                if reconciliation_config.what_if:
                     self.logger.info("Reconciliation is in what-if mode, skipping Route53 update")
                     continue
                 # Merge change requests and apply change request

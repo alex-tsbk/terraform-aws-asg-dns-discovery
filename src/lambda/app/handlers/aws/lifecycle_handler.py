@@ -198,7 +198,7 @@ class LifecycleService:
                     asg_dns_config.record_name,
                     asg_dns_config.record_type,
                     asg_dns_config.record_ttl,
-                    asg_dns_config.dns_mock_ip,
+                    asg_dns_config.dns_mock_value,
                     ip_address,
                 )
                 self.logger.debug(f"Instance registered in DNS: {ec2_instance_id} with status: {status}")
@@ -247,7 +247,7 @@ class LifecycleService:
                     asg_dns_config.record_name,
                     asg_dns_config.record_type,
                     asg_dns_config.managed_dns_record,
-                    asg_dns_config.dns_mock_ip,
+                    asg_dns_config.dns_mock_value,
                     ip_address,
                 )
                 self.logger.debug(f"Instance removed from DNS: {ec2_instance_id}")

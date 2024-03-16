@@ -3,7 +3,7 @@ import urllib.request
 from enum import Enum
 
 from app.config.models.health_check_config import HealthCheckConfig, HealthCheckProtocol
-from app.config.models.scaling_group_dns_config import ScalingGroupDnsConfigItem
+from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
 from app.utils.logging import get_logger
 
 
@@ -13,7 +13,7 @@ class Ec2HealthCheckService:
     def __init__(self):
         self.logger = get_logger()
 
-    def check(self, destination: str, asg_dns_config: ScalingGroupDnsConfigItem) -> bool:
+    def check(self, destination: str, asg_dns_config: ScalingGroupConfiguration) -> bool:
         """
         Perform a health check on an EC2 instance.
 

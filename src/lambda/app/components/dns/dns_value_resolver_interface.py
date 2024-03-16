@@ -1,20 +1,25 @@
-import abc
+from abc import abstractmethod, ABCMeta
 from typing import Union
 
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel
-from app.config.models.scaling_group_dns_config import ScalingGroupDnsConfigItem
+from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
 
 
-class DnsValueResolverInterface(metaclass=abc.ABCMeta):
+class DnsValueResolverInterface(metaclass=ABCMeta):
+    """Base interface for resolving values for DNS records.
 
-    @abc.abstractmethod
+    Args:
+        metaclass (_type_, optional): _description_. Defaults to ABCMeta.
+    """
+
+    @abstractmethod
     def resolve_dns_value(
-        self, dns_config_item: ScalingGroupDnsConfigItem, lifecycle_event: LifecycleEventModel
+        sg_config_item: ScalingGroupConfiguration, lifecycle_event: LifecycleEventModel
     ) -> Union[list[str], None]:
         """Resolves the value of a DNS record.
 
         Args:
-            dns_config_item (ScalingGroupDnsConfigItem): The DNS configuration item.
+            sg_config_item (ScalingGroupConfiguration): The DNS configuration item.
             lifecycle_event (LifecycleEventModel): The lifecycle event.
 
         Returns:

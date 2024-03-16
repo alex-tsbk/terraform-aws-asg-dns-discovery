@@ -28,7 +28,7 @@ class DnsRecordConfig(DataclassBase):
     # Whether the DNS record is managed by the terraform
     managed_dns_record: bool = field(default=False)
     # Default mock IP address to use when DNS record is managed
-    dns_mock_ip: str = field(default="1.0.0.217")
+    dns_mock_value: str = field(default="1.0.0.217")
 
     def __post_init__(self):
         """Validate the DNS record configuration"""
@@ -49,5 +49,5 @@ class DnsRecordConfig(DataclassBase):
             record_priority=item.get("record_priority", 0),
             record_weight=item.get("record_weight", 0),
             managed_dns_record=str(item.get("managed_dns_record", False)).lower() == "true",
-            dns_mock_ip=item.get("dns_mock_ip", "1.0.0.217"),
+            dns_mock_value=item.get("dns_mock_value", "1.0.0.217"),
         )

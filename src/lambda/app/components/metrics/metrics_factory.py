@@ -1,7 +1,7 @@
 from app.components.metrics.internal.development_metrics_service import DevelopmentMetricsService
 from app.components.metrics.metrics_interface import MetricsInterface
 from app.config.configuration_service import ConfigurationService
-from app.utils.instrumentation import RUNTIME_CONTEXT
+from app.config.instrumentation import RUNTIME_CONTEXT
 
 
 class MetricsServiceFactory:

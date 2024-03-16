@@ -1,4 +1,4 @@
-from app.utils.instrumentation import RUNTIME_CONTEXT
+from app.config.instrumentation import RUNTIME_CONTEXT
 
 
 class BusinessException(Exception):

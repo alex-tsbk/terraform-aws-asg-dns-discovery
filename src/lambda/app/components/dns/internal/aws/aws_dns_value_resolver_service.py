@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
     from mypy_boto3_ec2.service_resource import Instance
 
-from app.components.dns.dns_value_resolver_service import DnsValueResolverService
+from app.components.dns.dns_value_resolver_base_service import DnsValueResolverService
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel, LifecycleTransition
 from app.config.configuration_service import ConfigurationService
-from app.config.models.scaling_group_dns_config import ScalingGroupDnsConfigItem
+from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
 from app.infrastructure.aws.asg_service import AutoScalingService
 from app.infrastructure.aws.ec2_service import Ec2Service
 
@@ -21,17 +21,14 @@ class AwsDnsValueResolverService(DnsValueResolverService):
         aws_ec2_service: Ec2Service,
         aws_asg_service: AutoScalingService,
         configuration_service: ConfigurationService,
-        *args,
-        **kwargs,
     ) -> None:
-        super().__init__(*args, **kwargs)
         self.aws_ec2_service = aws_ec2_service
         self.aws_asg_service = aws_asg_service
         self.configuration_service = configuration_service
 
     def handle_ip_source(
         self,
-        dns_config_item: ScalingGroupDnsConfigItem,
+        dns_config_item: ScalingGroupConfiguration,
         lifecycle_event: LifecycleEventModel,
         ip_type: Literal["public", "private"],
     ) -> list[str]:
@@ -52,7 +49,7 @@ class AwsDnsValueResolverService(DnsValueResolverService):
 
     def handle_tag_source(
         self,
-        dns_config_item: ScalingGroupDnsConfigItem,
+        dns_config_item: ScalingGroupConfiguration,
         lifecycle_event: LifecycleEventModel,
         tag_name: str,
     ) -> list[str]:
@@ -96,12 +93,12 @@ class AwsDnsValueResolverService(DnsValueResolverService):
         ]
 
     def _get_ec2_instances(
-        self, dns_config_item: ScalingGroupDnsConfigItem, lifecycle_event: LifecycleEventModel
+        self, dns_config_item: ScalingGroupConfiguration, lifecycle_event: LifecycleEventModel
     ) -> list[Instance]:
         """Resolve EC2 instances.
 
         Args:
-            dns_config_item (ScalingGroupDnsConfigItem): The Scaling Group DNS configuration item.
+            dns_config_item (ScalingGroupConfiguration): The Scaling Group DNS configuration item.
             lifecycle_event (LifecycleEventModel): The lifecycle event.
 
         Returns:

@@ -3,6 +3,7 @@ from enum import Enum
 
 from app.config.models.dns_record_config import DnsRecordConfig
 from app.config.models.health_check_config import HealthCheckConfig
+from app.config.models.readiness_config import ReadinessConfig
 from app.utils.dataclass import DataclassBase
 
 
@@ -24,11 +25,13 @@ class DnsRecordMappingMode(Enum):
         return DnsRecordMappingMode[label.upper()]
 
 
-class ScalingGroupDnsConfigItem(DataclassBase):
-    """Model representing the Scaling Group <--> DNS configuration"""
+class ScalingGroupConfiguration(DataclassBase):
+    """Model representing the Scaling Group configuration"""
 
     # Name of the Scaling Group
     scaling_group_name: str
+    # Valid states for the Scaling Group
+    scaling_group_valid_states: list[str] = field(default_factory=list)
     # Specifies what to use as a value source for DNS record
     value_source: str = field(default="ip:private")
     # Specifies mode of how DNS records should be mapped
@@ -36,11 +39,15 @@ class ScalingGroupDnsConfigItem(DataclassBase):
     # DNS configuration
     dns_config: DnsRecordConfig = field(default_factory=DnsRecordConfig)
     # Health check configuration
-    health_check_config: HealthCheckConfig = field(default_factory=HealthCheckConfig)
+    health_check_config: HealthCheckConfig | None = field(default=None)
+    # Readiness config
+    readiness_config: ReadinessConfig | None = field(default=None)
 
     def __post_init__(self):
         if not self.scaling_group_name:
             raise ValueError("ASG name is required")
+        if not self.scaling_group_valid_states:
+            self.scaling_group_valid_states = ["InService"]
 
         RECORDS_SUPPORTING_MULTIVALUE = [
             "A",
@@ -69,7 +76,7 @@ class ScalingGroupDnsConfigItem(DataclassBase):
         return hash(str(self))
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ScalingGroupDnsConfigItem):
+        if not isinstance(other, ScalingGroupConfiguration):
             return False
         return str(self) == str(other)
 
@@ -93,18 +100,19 @@ class ScalingGroupDnsConfigItem(DataclassBase):
     def from_dict(item: dict):
         kwargs = {
             "scaling_group_name": item.get("scaling_group_name"),
+            "scaling_group_valid_states": item.get("scaling_group_valid_states", ["InService"]),
             "value_source": item.get("value_source", "ip:private").lower(),
             "mode": DnsRecordMappingMode.from_str(item.get("mode", "MULTIVALUE")),
             "dns_config": DnsRecordConfig.from_dict(item.get("dns_config", {})),
             "health_check_config": HealthCheckConfig.from_dict(item.get("health_check_config", {})),
         }
-        return ScalingGroupDnsConfigItem(**kwargs)
+        return ScalingGroupConfiguration(**kwargs)
 
 
-class ScalingGroupDnsConfig(DataclassBase):
-    config_items: list[ScalingGroupDnsConfigItem] = field(default_factory=list)
+class ScalingGroupConfigurations(DataclassBase):
+    config_items: list[ScalingGroupConfiguration] = field(default_factory=list)
 
-    def for_scaling_group(self, name: str) -> list[ScalingGroupDnsConfigItem]:
+    def for_scaling_group(self, name: str) -> list[ScalingGroupConfiguration]:
         """Resolves Scaling Group DNS configurations by Scaling Group name
 
         Args:

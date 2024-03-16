@@ -17,7 +17,16 @@
 				"[python]": {
 					"editor.defaultFormatter": "ms-python.black-formatter",
 					"editor.formatOnSave": true,
-				  },
+				},
+				"python.testing.unittestEnabled": false,
+				"python.testing.pytestEnabled": true,
+				"python.testing.autoTestDiscoverOnSaveEnabled": true,
+				"python.testing.pytestPath": "python -m pytest",
+				"python.testing.cwd": "${workspaceFolder}/src/lambda",
+				"python.testing.pytestArgs": [
+					"-c",
+					"pytest.ini"
+				],
 			},
 			"extensions": [
 				"ms-python.black-formatter",

@@ -69,7 +69,7 @@ def _instantiate_dataclass(cls, data: dict):
     return cls(**init_args)
 
 
-def _datetime_to_str(dt: datetime.datetime) -> str:
+def _datetime_to_str(dt: datetime) -> str:
     """Converts datetime to string
 
     Args:
@@ -81,7 +81,7 @@ def _datetime_to_str(dt: datetime.datetime) -> str:
     return dt.strftime(DATETIME_TO_STR_FORMAT)
 
 
-def _str_to_datetime(dt: str) -> datetime.datetime:
+def _str_to_datetime(dt: str) -> datetime:
     """Converts string to datetime
 
     Args:
@@ -90,4 +90,4 @@ def _str_to_datetime(dt: str) -> datetime.datetime:
     Returns:
         datetime.datetime: Datetime
     """
-    return datetime.datetime.strptime(dt, DATETIME_TO_STR_FORMAT)
+    return datetime.strptime(dt, DATETIME_TO_STR_FORMAT)

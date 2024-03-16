@@ -26,6 +26,10 @@ variable "records" {
     # Name of the Scaling Group that is the target of the DNS Discovery
     scaling_group_name = string
 
+    # List of valid states for the scaling group. Default is ['InService']
+    # More on states here: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-lifecycle.html
+    scaling_group_valid_states = optional(list(string), ["InService"])
+
     # Value to use as the source for the DNS record. 'ip:private' is default.
     # Supported values:
     # * 'ip:public' - will use public IP of the instance
@@ -48,7 +52,7 @@ variable "records" {
     dns_config = object({
       # Name of DNS provider. Supported values: 'route53', 'cloudflare'. Default: 'route53'
       provider = optional(string, "route53")
-      # For AWS - Hosted zone ID of the domain. 
+      # For AWS - Hosted zone ID of the domain.
       # You can find this in Route53 console.
       dns_zone_id = string
       # Name of the DNS record. If your domain is 'example.com', and you want to
@@ -65,6 +69,9 @@ variable "records" {
       record_weight = optional(number, 0)
 
       # If true, DNS record will be created and managed by Terraform. This has it's own pros and cons.
+      #
+      # It is strongly recommended to keep this setting set to 'false', unless you really understand the implications.
+      #
       # Cons:
       #   1) If you have existing Route53 record and EC2s registered in it, keep this setting set to false.
       #      Otherwise, terraform will fail to create the record because it already exists.
@@ -75,25 +82,43 @@ variable "records" {
       #      because event for first instance launch 'would have been fired' before EC2 module provisioned SNS topic and ASG lifecycle hook.
       #
       # Pros:
-      #   1) You manage DNS records in Terraform, therefore you have access to resources in Terraform state.
+      #   1) You manage DNS records in Terraform, therefore - you have access to resources via Terraform state.
       #
       # Reconciliation (see below):
-      #   To address the issue of the first EC2 not having a DNS record, you can enable reconciliation.
-      #   Even if you have 'managed_dns_record' set to false, reconciliation will add EC2 on the first reconciliation run.
+      #   When deploying this alongside ASG, to address the limitation of the first EC2s not having a DNS record,
+      #   it is suggested to enable reconciliation. Even if you have 'managed_dns_record' set to false,
+      #   reconciliation will add EC2s on the first reconciliation run. This should satisfy vast majority of use-cases.
       managed_dns_record = optional(bool, false)
 
-      # Default 'mock' IP address.
+      # Default 'mock' value.
       # Address is used when ASG is created, but no EC2s are yet running matching readiness criteria,
       # yet we still need to have IP address in DNS record associated (record can't be created without value).
-      # Once the first lifecycle is triggered, this value will be replaced with the actual IP of the EC2.
-      dns_mock_ip = optional(string, "1.0.0.217")
+      # Once the first lifecycle is triggered, this value will be replaced with the actual value resolved from the EC2 (IP typically).
+      dns_mock_value = optional(string, "1.0.0.217")
     })
+
+    # ###
+    # READINESS
+    # ###
+
+    readiness = optional(object({
+      # If true, the readiness check will be enabled. Disabled by default.
+      enabled = optional(bool, false)
+      # Tag key to look for
+      tag_key = string
+      # Tag value to look for
+      tag_value = string
+      # Timeout in seconds. If the tag is not set within this time, the lambda will fail.
+      timeout_seconds = optional(number, 300)
+      # Interval in seconds to check for the tag. Default is 5 seconds.
+      interval_seconds = optional(number, 5)
+    }), null)
 
     # ###
     # HEALTHCHECK
     # ###
 
-    # Health check to perform before adding EC2 instance to DNS record. 
+    # Health check to perform before adding EC2 instance to DNS record.
     # Set to null to disable healthcheck overall.
     health_check = optional(object({
       enabled         = bool
@@ -127,8 +152,8 @@ variable "instance_readiness" {
 
   default = {
     enabled   = true
-    tag_key   = "app:code-deploy:status"
-    tag_value = "success"
+    tag_key   = "app:readiness:status"
+    tag_value = "ready"
   }
 }
 
@@ -136,8 +161,10 @@ variable "reconciliation" {
   description = "Configuration for reconciliation of DNS records that are enabled for Service Discovery."
 
   type = object({
-    # Whatif mode. If true, the reconciliation will only log what it would do, but not actually do it.
-    whatif = optional(bool, false)
+    # "What If" mode. If true, the reconciliation will only log what it would do, but not actually do it.
+    # It is recommended that you run application in this mode first to see what would happen,
+    # and ensure changes created are as what expected.
+    what_if = optional(bool, false)
     # When set to false, will still create event bridge rule to run the lambda on a schedule,
     # but in 'disabled' state.
     schedule_enabled = optional(bool, false)
@@ -151,7 +178,7 @@ variable "reconciliation" {
   })
 
   default = {
-    whatif                    = false
+    what_if                   = false
     schedule_enabled          = false
     schedule_interval_minutes = 5
     max_concurrency           = 1
@@ -188,7 +215,7 @@ variable "lambda_settings" {
     python_runtime = optional(string, "python3.12")
     # Timeout for the lambda function. Default is 15 minutes.
     lifecycle_timeout_seconds = optional(number, 15 * 60)
-    # Subnets where the lambda will be deployed. 
+    # Subnets where the lambda will be deployed.
     # Must be set if the lambda needs to access resources in the VPC - health checks on private IPs.
     subnets         = optional(list(string), [])
     security_groups = optional(list(string), [])

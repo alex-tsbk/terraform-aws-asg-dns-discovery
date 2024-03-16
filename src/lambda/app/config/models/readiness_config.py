@@ -10,9 +10,9 @@ class ReadinessConfig:
     # The timeout in seconds to check the readiness of the instance
     timeout_seconds: int = field(default=60)
     # The tag key to check for readiness
-    tag_key: str = field(default="app:code-deploy:status")
+    tag_key: str = field(default="app:readiness:status")
     # The tag value to check for readiness
-    tag_value: str = field(default="success")
+    tag_value: str = field(default="ready")
 
     @staticmethod
     def from_dict(item: dict):

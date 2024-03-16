@@ -4,7 +4,7 @@ import logging
 import os
 from functools import cache
 
-from app.utils.instrumentation import RUNTIME_CONTEXT
+from app.config.instrumentation import RUNTIME_CONTEXT
 
 if RUNTIME_CONTEXT.is_aws:
     # Reduce boto3 logging noise for third-party libraries

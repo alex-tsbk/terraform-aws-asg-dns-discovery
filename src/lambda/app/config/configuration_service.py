@@ -3,12 +3,12 @@ import json
 import os
 from typing import Callable
 
-from app.aws.dynamo import DynamoDBRepository
-from app.config.models.dynamo_config import DynamoConfig
+# from app.aws.dynamo import DynamoDBRepository
+from app.config.models.db_config import DbConfig
 from app.config.models.metrics_config import MetricsConfig
 from app.config.models.readiness_config import ReadinessConfig
 from app.config.models.reconciliation_config import ReconciliationConfig
-from app.config.models.scaling_group_dns_config import ScalingGroupDnsConfig, ScalingGroupDnsConfigItem
+from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration, ScalingGroupConfigurations
 from app.utils.dataclass import DataclassBase
 from app.utils.singleton import Singleton
 
@@ -25,7 +25,7 @@ class ConfigurationService(metaclass=Singleton):
         # since configuration dynamo db table name is resolved by the same class
         self.dynamodb_repository = DynamoDBRepository(self.get_dynamo_config().table_name)
 
-    def get_asg_dns_configs(self) -> ScalingGroupDnsConfig:
+    def get_asg_dns_configs(self) -> ScalingGroupConfigurations:
         """Resolves ASG DNS configurations for all ASGs from DynamoDB
 
         Args:
@@ -60,13 +60,13 @@ class ConfigurationService(metaclass=Singleton):
                 f"Unable to find ASG DNS configuration not found in DynamoDB table: {config_table_name} -> {config_item_key_id}"
             )
 
-        dns_config_items: list[ScalingGroupDnsConfigItem] = []
+        sg_config_items: list[ScalingGroupConfiguration] = []
         for item in config_items:
             # Create AsgDnsConfigItem object
-            dns_config_items.append(ScalingGroupDnsConfigItem.from_dict(item))
+            sg_config_items.append(ScalingGroupConfiguration.from_dict(item))
 
         # Set instance variable
-        self.cached_asg_config = ScalingGroupDnsConfig(items=dns_config_items)
+        self.cached_asg_config = ScalingGroupConfigurations(items=sg_config_items)
         return self.cached_asg_config
 
     @property
@@ -82,10 +82,7 @@ class ConfigurationService(metaclass=Singleton):
             enabled = os.environ.get("ec2_readiness_enabled", "true").lower() == "true"
             interval = int(os.environ.get("ec2_readiness_interval_seconds", 5))
             timeout = int(os.environ.get("ec2_readiness_timeout_seconds", 300))
-            tag_key = os.environ.get(
-                "ec2_readiness_tag_key",
-                "app:code-deploy:status",
-            )
+            tag_key = os.environ.get("ec2_readiness_tag_key", "app:code-deploy:status")
             tag_value = os.environ.get("ec2_readiness_tag_value", "success")
             return ReadinessConfig(
                 enabled=enabled,
@@ -98,13 +95,15 @@ class ConfigurationService(metaclass=Singleton):
         return self._cached("readiness_config", resolver)
 
     @property
-    def dynamo_config(self) -> DynamoConfig:
+    def db_config(self) -> DbConfig:
         """Returns DynamoDB settings. These are used to determine if an instance is ready to serve traffic."""
 
-        def resolver() -> DynamoConfig:
-            table_name = os.environ.get("dynamo_db_table_name", "")
-            config_item_key_id = os.environ.get("dynamo_db_config_item_key_id", "")
-            return DynamoConfig(
+        def resolver() -> DbConfig:
+            provider = os.environ.get("db_provider", "dynamodb")
+            table_name = os.environ.get("db_table_name", "")
+            config_item_key_id = os.environ.get("db_config_item_key_id", "")
+            return DbConfig(
+                provider=provider,
                 table_name=table_name,
                 config_item_key_id=config_item_key_id,
             )
@@ -116,9 +115,9 @@ class ConfigurationService(metaclass=Singleton):
         """Returns reconciliation settings. These are used to determine if an instance is ready to serve traffic."""
 
         def resolver() -> ReconciliationConfig:
-            whatif = os.environ.get("reconciliation_whatif", "false").lower() == "true"
+            what_if = os.environ.get("reconciliation_what_if", "false").lower() == "true"
             max_concurrency = int(os.environ.get("reconciliation_max_concurrency", 1))
-            return ReconciliationConfig(whatif, max_concurrency)
+            return ReconciliationConfig(what_if, max_concurrency)
 
         return self._cached("reconciliation_config", resolver)
 

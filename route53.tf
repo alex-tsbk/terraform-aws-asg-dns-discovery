@@ -33,5 +33,5 @@ resource "aws_route53_record" "asg_dns_discovery_ips" {
   type    = each.value.dns_config.record_type
   ttl     = each.value.dns_config.record_ttl
 
-  records = length(each.value.dns_config.value_source == "ip:public" ? data.aws_instances.asg_ec2_instances[each.key].public_ips : data.aws_instances.asg_ec2_instances[each.key].private_ips) > 0 ? each.value.dns_config.value_source == "ip:public" ? data.aws_instances.asg_ec2_instances[each.key].public_ips : data.aws_instances.asg_ec2_instances[each.key].private_ips : [each.value.dns_mock_ip]
+  records = length(each.value.dns_config.value_source == "ip:public" ? data.aws_instances.asg_ec2_instances[each.key].public_ips : data.aws_instances.asg_ec2_instances[each.key].private_ips) > 0 ? each.value.dns_config.value_source == "ip:public" ? data.aws_instances.asg_ec2_instances[each.key].public_ips : data.aws_instances.asg_ec2_instances[each.key].private_ips : [each.value.dns_mock_value]
 }

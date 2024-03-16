@@ -23,9 +23,9 @@ If answer to any or all of the below is "Yes", then this module might help you:
 
 
 ## Technical Details
-Package is composed of small applications:
+Package is composed of applications:
 1. Firs application augments your ASGs with [lifecycle hooks](https://docs.aws.amazon.com/autoscaling/ec2/userguide/lifecycle-hooks.html) and listens for ASG Lifecycle events. As EC2 instances transition to/from `InService` states changes are handled and DNS records updated according to configuration specified.
-1. Second application is 'reconciliation' service. It uses the same codebase, but runs at specified cadence and reconciles state of your ASGs with DNS records. If any drift is found - updates DNS records.
+1. Second application is 'reconciliation' service. It uses the same codebase, but runs at specified cadence and reconciles state of your ASGs with DNS records. If any drift is found - updates DNS records accordingly.
 
 The following DNS providers supported:
 * Route53
@@ -60,18 +60,6 @@ Once
 
 Once everything is done, open new bash terminal, and type in `make format`. If you see something similar to `All done! ✨ 🍰 ✨` in the output - then everything has been bootstrapped successfully.
 
-If any of the functionality may require any additional packages, these must be added to `.\.venv\requirements.txt`, along with existing ones.
-
-Please note, that some commonly-used packages are already available in Lambda runtime: boto3, etc.
-There are some gists (like [this one](https://gist.github.com/gene1wood/4a052f39490fae00e0c3#file-all_aws_lambda_modules_python3-10-txt)) to help you decide whether your package must be shipped alongside your lambda code, or it's already available to be used.
-
-Please note, that for local development - all external packages must still be explicitly declared in `.\.venv\init.ps1` to allow running scripts locally.
-
-### Activating Virtual Environment
-You can now reload your terminal to activate Python Virtual Environment or can type in `.\.venv\activate.ps1` to activate it on demand.
-
-If you're using VS Code - it should prompt you now to select interpreter from environment. If it doesn't do it follow this guide to ["Select and activate an environment"](https://code.visualstudio.com/docs/python/environments#_select-and-activate-an-environment)
-
 ### Consideration about using 3rd party packages
 
 Please note, that at the moment of writing this documentation, only the following PIP packages are available at runtime:
@@ -91,7 +79,7 @@ six             1.16.0
 urllib3         1.26.18
 ```
 
-This code doesn't use anything except what's available out of the box.
+This code doesn't use anything except what's available out of the box for Python 3.12 AWS Lambda runtime.
 
 You can always re-confirm what are the latest available packages by exploring `public.ecr.aws/lambda/python:3.12` docker image:
 
@@ -109,5 +97,5 @@ My personal preference when developing this package was to keep external depende
 
 However, if you're thinking to build on top of this module, I suggest you look into using base layer from [Powertools for AWS Lambda](https://docs.powertools.aws.dev/lambda/python/latest/). This already includes ton of useful packages.
 
-#### Notes
-* There looks like some kind of glitch when using [indent-rainbow](https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow) extension. If it doesn't show up on first load - disabling extension, reloading window and re-enabling it again should fix the missing indentation highlight.
+#### Known Issues
+* There looks like some kind of glitch when using [indent-rainbow](https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow) extension. If it doesn't show up on first load - disabling extension, reloading window and re-enabling extension again should fix the missing indentation highlight.

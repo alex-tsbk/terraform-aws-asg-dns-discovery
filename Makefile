@@ -1,6 +1,11 @@
 .EXPORT_ALL_VARIABLES:
+SUBDIR_ROOTS := src/lambda
+DIRS := . $(shell find $(SUBDIR_ROOTS) -type d)
+GARBAGE_PATTERNS := .pytest_cache
+GARBAGE := $(foreach DIR,$(DIRS),$(addprefix $(DIR)/,$(GARBAGE_PATTERNS)))
 
 VENV = .venv
+
 
 setup: venv install
 
@@ -22,6 +27,4 @@ format:
 
 .PHONY: clean
 clean:
-	if exist .\\.git\\hooks then rmdir .\\.git\\hooks /q /s fi
-	if exist .\\$(VENV)\\ ( rmdir .\\.venv /q /s )
-	if exist poetry.lock ( del poetry.lock /q /s )
+	rm -rf $(GARBAGE)
