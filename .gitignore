@@ -126,6 +126,7 @@ celerybeat.pid
 .env
 env/
 venv/
+.venv/
 ENV/
 env.bak/
 venv.bak/
@@ -163,13 +164,3 @@ cython_debug/
 
 # Mac crap
 *.DS_Store
-
-# Custom
-# Except the bootstrap files
-.venv/*
-!.venv/activate.ps1
-!.venv/activate.sh
-!.venv/freeze.ps1
-!.venv/init.ps1
-!.venv/init.sh
-!.venv/requirements.txt

@@ -15,10 +15,9 @@ from app.utils.serialization import to_json
 class DynamoDBRepository:
     """Repository for accessing items in DynamoDB table."""
 
-    dynamodb: DynamoDBServiceResource = boto3.resource("dynamodb", config=boto_config.CONFIG)
-
     def __init__(self, table_name: str):
         self.logger = get_logger()
+        self.dynamodb: DynamoDBServiceResource = boto3.resource("dynamodb", config=boto_config.CONFIG)
         self.table: Table = self.dynamodb.Table(table_name)
 
     def get_item(self, resource_id: str) -> dict:

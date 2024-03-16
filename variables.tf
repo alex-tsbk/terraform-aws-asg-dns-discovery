@@ -161,20 +161,30 @@ variable "reconciliation" {
   description = "Configuration for reconciliation of DNS records that are enabled for Service Discovery."
 
   type = object({
-    # "What If" mode. If true, the reconciliation will only log what it would do, but not actually do it.
+    # ###
+    # RUNTIME BEHAVIOR
+    # ###
+
+    # "What If" mode. When `true`, the reconciliation will only log what it would do, but not actually do it.
     # It is recommended that you run application in this mode first to see what would happen,
     # and ensure changes created are as what expected.
     what_if = optional(bool, false)
-    # When set to false, will still create event bridge rule to run the lambda on a schedule,
-    # but in 'disabled' state.
-    schedule_enabled = optional(bool, false)
-    # Interval in minutes between reconciliation runs. Default is 5 minutes.
-    schedule_interval_minutes = optional(number, 5)
     # Maximum number of concurrent reconciliations. Default is 1.
     # Please note, depending on your ASG sizes and their count, you may want to adjust this number.
     # Math here is simple - the less EC2s you have, the more this **can** go (less resources - less boto3 throttling).
     # Setting this to more than number of ASGs being managed will not yield any boost.
     max_concurrency = optional(number, 1)
+
+    # ###
+    # INFRASTRUCTURE SETTINGS
+    # ###
+
+    # When set to `true` will enable running reconciliation on schedule.
+    # When set to `false`, will still create event bridge rule to run the lambda on a schedule,
+    # but in 'disabled' state. Default is `false`.
+    schedule_enabled = optional(bool, false)
+    # Interval in minutes between reconciliation runs. Default is 5 minutes.
+    schedule_interval_minutes = optional(number, 5)
   })
 
   default = {

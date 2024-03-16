@@ -1,9 +1,10 @@
 import abc
 
-from app.components.dns.models.dns_change_request_model import DnsChangeRequestModel
-from app.components.dns.models.dns_change_response_model import DnsChangeResponseModel
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel
 from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
+
+from .models.dns_change_request_model import DnsChangeRequestModel
+from .models.dns_change_response_model import DnsChangeResponseModel
 
 
 class DnsManagementInterface(metaclass=abc.ABCMeta):

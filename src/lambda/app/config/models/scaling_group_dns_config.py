@@ -1,4 +1,4 @@
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum
 
 from app.config.models.dns_record_config import DnsRecordConfig
@@ -25,6 +25,7 @@ class DnsRecordMappingMode(Enum):
         return DnsRecordMappingMode[label.upper()]
 
 
+@dataclass
 class ScalingGroupConfiguration(DataclassBase):
     """Model representing the Scaling Group configuration"""
 

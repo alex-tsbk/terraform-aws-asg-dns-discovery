@@ -1,4 +1,4 @@
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 from typing import Union
 
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel

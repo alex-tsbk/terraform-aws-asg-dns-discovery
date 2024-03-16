@@ -17,10 +17,9 @@ from app.utils.serialization import to_json
 class AutoScalingService:
     """Service class for interacting with Auto-Scaling Groups."""
 
-    autoscaling_client: AutoScalingClient = boto3.client("autoscaling", config=boto_config.CONFIG)
-
     def __init__(self):
         self.logger = get_logger()
+        self.autoscaling_client: AutoScalingClient = boto3.client("autoscaling", config=boto_config.CONFIG)
 
     def list_running_ec2_instances(
         self,

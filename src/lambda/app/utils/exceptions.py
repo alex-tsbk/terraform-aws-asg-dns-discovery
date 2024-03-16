@@ -1,4 +1,4 @@
-from app.config.instrumentation import RUNTIME_CONTEXT
+from app.config.runtime_context import RuntimeContext
 
 
 class BusinessException(Exception):
@@ -23,7 +23,7 @@ class CloudProviderException(Exception):
 
     def is_aws(self) -> bool:
         """Returns True if the error is an AWS error, False otherwise"""
-        if not RUNTIME_CONTEXT.is_aws:
+        if not RuntimeContext.is_aws:
             return False
         from botocore.exceptions import ClientError
 

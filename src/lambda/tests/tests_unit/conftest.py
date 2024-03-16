@@ -1,0 +1,12 @@
+import os
+
+import pytest
+
+
+@pytest.fixture(scope="module")
+def aws_runtime():
+    cur_value = os.environ.get("cloud_provider", None)
+    os.environ["cloud_provider"] = "aws"
+    yield
+    if cur_value is not None:
+        os.environ["cloud_provider"] = cur_value

@@ -1,11 +1,7 @@
 .EXPORT_ALL_VARIABLES:
-SUBDIR_ROOTS := src/lambda
-DIRS := . $(shell find $(SUBDIR_ROOTS) -type d)
-GARBAGE_PATTERNS := .pytest_cache
-GARBAGE := $(foreach DIR,$(DIRS),$(addprefix $(DIR)/,$(GARBAGE_PATTERNS)))
 
+# Default poetry virtual environment location, relative to the project root
 VENV = .venv
-
 
 setup: venv install
 
@@ -27,4 +23,5 @@ format:
 
 .PHONY: clean
 clean:
-	rm -rf $(GARBAGE)
+	rm -rf .pytest_cache/
+	rm -rf $(VENV)/

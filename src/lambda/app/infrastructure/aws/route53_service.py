@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 if TYPE_CHECKING:
     from mypy_boto3_route53.client import Route53Client
 
-from app.components.dns.aws.aws_dns_change_request_model import AwsDnsChangeRequestModel
+from app.components.dns.internal.aws.aws_dns_change_request_model import AwsDnsChangeRequestModel
 from app.infrastructure.aws import boto_config
 from app.utils.exceptions import CloudProviderException
 from app.utils.logging import get_logger

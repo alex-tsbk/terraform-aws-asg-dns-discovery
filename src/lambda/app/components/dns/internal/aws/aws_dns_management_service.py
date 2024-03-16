@@ -1,6 +1,6 @@
-from app.components.dns.internal.aws.aws_dns_change_request_model import AwsDnsChangeRequestModel
 from app.components.dns.dns_management_interface import DnsManagementInterface
-from app.components.dns.dns_value_resolver_base_service import DnsValueResolverService
+from app.components.dns.dns_value_resolver_interface import DnsValueResolverInterface
+from app.components.dns.internal.aws.aws_dns_change_request_model import AwsDnsChangeRequestModel
 from app.components.dns.models.dns_change_request_model import DnsChangeRequestAction, DnsChangeRequestModel
 from app.components.dns.models.dns_change_response_model import DnsChangeResponseModel
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel, LifecycleTransition
@@ -13,7 +13,7 @@ from app.utils.serialization import to_json
 class AwsDnsManagementService(DnsManagementInterface):
     """Service for managing DNS records in AWS environment."""
 
-    def __init__(self, dns_service: Route53Service, value_resolver_service: DnsValueResolverService) -> None:
+    def __init__(self, dns_service: Route53Service, value_resolver_service: DnsValueResolverInterface) -> None:
         self.logger = get_logger()
         self.dns_service = dns_service
         self.value_resolver_service = value_resolver_service
@@ -61,7 +61,7 @@ class AwsDnsManagementService(DnsManagementInterface):
         """Apply the change request to the DNS record.
 
         Args:
-            hosted_zone_id [str]: The ID of the hosted zone that contains the resource record sets that you want to change.
+            sg_config_item [ScalingGroupConfiguration]: The Scaling Group DNS configuration item.
             change_request [DnsChangeRequestModel]: The change request to apply.
         """
         hosted_zone_id = sg_config_item.dns_config.dns_zone_id
@@ -230,9 +230,7 @@ class AwsDnsManagementService(DnsManagementInterface):
             record_ttl=sg_config_item.dns_config.record_ttl,
         )
 
-    def _extract_values_from_route53_record(
-        self, sg_config_item: ScalingGroupConfiguration, record: dict
-    ) -> list[str]:
+    def _extract_values_from_route53_record(self, sg_config_item: ScalingGroupConfiguration, record: dict) -> list[str]:
         """Extract values from Route53 record DNS record."""
         if not record or "ResourceRecords" not in record:
             return []

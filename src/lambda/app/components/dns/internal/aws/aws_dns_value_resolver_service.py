@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
     from mypy_boto3_ec2.service_resource import Instance
 
-from app.components.dns.dns_value_resolver_base_service import DnsValueResolverService
+from app.components.dns.internal.dns_value_resolver_base_service import DnsValueResolverService
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel, LifecycleTransition
 from app.config.configuration_service import ConfigurationService
 from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration

@@ -1,7 +1,7 @@
 from app.components.metrics.internal.development_metrics_service import DevelopmentMetricsService
 from app.components.metrics.metrics_interface import MetricsInterface
 from app.config.configuration_service import ConfigurationService
-from app.config.instrumentation import RUNTIME_CONTEXT
+from app.config.runtime_context import RuntimeContext
 
 
 class MetricsServiceFactory:
@@ -22,7 +22,7 @@ class MetricsServiceFactory:
             return DevelopmentMetricsService()
 
         metrics_provider = self.config_service.metrics_config.metrics_provider
-        if RUNTIME_CONTEXT.is_aws and metrics_provider == "cloudwatch":
+        if RuntimeContext.is_aws and metrics_provider == "cloudwatch":
             from app.components.metrics.aws.aws_cloudwatch_metrics_service import AwsCloudwatchMetricsService
 
             return AwsCloudwatchMetricsService(self.config_service)

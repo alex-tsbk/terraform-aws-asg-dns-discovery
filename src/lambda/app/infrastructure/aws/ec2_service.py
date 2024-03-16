@@ -13,10 +13,9 @@ if TYPE_CHECKING:
 class Ec2Service:
     """Service class for interacting with EC2."""
 
-    ec2_resource: EC2ServiceResource = boto3.resource("ec2", config=boto_config.CONFIG)
-
     def __init__(self):
         self.logger = get_logger()
+        self.ec2_resource: EC2ServiceResource = boto3.resource("ec2", config=boto_config.CONFIG)
 
     def get_instance(self, instance_id: str) -> Instance:
         """Returns EC2 instance object by instance ID

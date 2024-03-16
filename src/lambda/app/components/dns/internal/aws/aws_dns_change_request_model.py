@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import override
 
 from app.components.dns.models.dns_change_request_model import DnsChangeRequestAction, DnsChangeRequestModel
 
 
-@dataclass
 class AwsDnsChangeRequestModel(DnsChangeRequestModel):
     """Model for AWS Route53 change request."""
 
@@ -39,7 +38,7 @@ class AwsDnsChangeRequestModel(DnsChangeRequestModel):
 
     @override
     def build_change(self) -> "AwsDnsChangeRequestModel":
-        """Generate a change request for a record.
+        """Generate a change request for a record based on record type.
 
         Returns:
             AwsDnsChangeRequestModel: The change request.
