@@ -51,6 +51,7 @@
   "cSpell.words": [
     "boto",
     "devcontainer",
+    "healthcheck",
     "venv"
   ]
 }

@@ -16,7 +16,7 @@ from app.services.mutex_service import MutexService
 
 
 class ReconciliationService:
-    """Service class for reconciling ASG state and update DNS records."""
+    """Service class for reconciling Scaling Group state and update DNS records."""
 
     def __init__(self):
         self.logger = get_logger()

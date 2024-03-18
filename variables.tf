@@ -101,6 +101,7 @@ variable "records" {
     # READINESS
     # ###
 
+    # Scaling Group specific readiness check. If set, will override global readiness check.
     readiness = optional(object({
       # If true, the readiness check will be enabled. Disabled by default.
       enabled = optional(bool, false)
@@ -132,10 +133,10 @@ variable "records" {
   default = []
 }
 
-# Please note, it's responsibility of your application to set the tag on the EC2 instance
-# to the value specified here once EC2 is fully bootstrapped with your application.
+# Please note, it's responsibility of your application to set the tag on the instance
+# to the value specified here once instance is fully bootstrapped with your application/custom scripts.
 variable "instance_readiness" {
-  description = "Configuration for readiness check. DNS discovery will not proceed until tagging criteria are met."
+  description = "Default global configuration for readiness check. DNS discovery will not proceed until tagging criteria are met."
 
   type = object({
     # If true, the readiness check will be enabled. Disabled by default.

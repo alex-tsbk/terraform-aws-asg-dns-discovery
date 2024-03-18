@@ -14,8 +14,8 @@ if RuntimeContext.is_aws:
     logging.getLogger("urllib3").setLevel(logging.ERROR)
 
 # Environment variables
-LOG_LEVEL = os.environ.get("log-level", "DEBUG").upper()
-LOG_IDENTIFIER = os.environ.get("log-identifier", "dns-discovery")
+LOG_LEVEL = os.environ.get("log_level", "DEBUG").upper()
+LOG_IDENTIFIER = os.environ.get("log_identifier", "sg-dns-discovery")
 
 
 @cache

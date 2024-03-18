@@ -105,8 +105,16 @@ class ScalingGroupConfiguration(DataclassBase):
             "value_source": item.get("value_source", "ip:private").lower(),
             "mode": DnsRecordMappingMode.from_str(item.get("mode", "MULTIVALUE")),
             "dns_config": DnsRecordConfig.from_dict(item.get("dns_config", {})),
-            "health_check_config": HealthCheckConfig.from_dict(item.get("health_check_config", {})),
         }
+        # Only create health check config if it's present in the config
+        health_check_config = item.get("health_check_config", {})
+        if health_check_config:
+            kwargs["health_check_config"] = HealthCheckConfig.from_dict(health_check_config)
+        # Only create readiness config if it's present in the config
+        readiness_config = item.get("readiness_config", {})
+        if readiness_config:
+            kwargs["readiness_config"] = ReadinessConfig.from_dict(readiness_config)
+        # Initialize the config
         return ScalingGroupConfiguration(**kwargs)
 
 
