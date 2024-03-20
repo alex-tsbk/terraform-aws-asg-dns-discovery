@@ -12,7 +12,7 @@ def register_services(di_container: DIContainer, env_config_service: Environment
     Args:
         di_container (DIContainer): DI container
     """
-    if RuntimeContext.is_development:
+    if RuntimeContext.is_localhost_development:
         di_container.register(MetricsInterface, DevelopmentMetricsService, lifetime="scoped")
 
     metrics_provider = env_config_service.metrics_config.metrics_provider
