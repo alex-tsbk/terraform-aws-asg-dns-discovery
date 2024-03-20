@@ -6,11 +6,7 @@ from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
 
 
 class DnsValueResolverInterface(metaclass=ABCMeta):
-    """Base interface for resolving values for DNS records.
-
-    Args:
-        metaclass (_type_, optional): _description_. Defaults to ABCMeta.
-    """
+    """Base interface for resolving values for DNS records."""
 
     @abstractmethod
     def resolve_dns_value(

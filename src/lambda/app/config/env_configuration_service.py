@@ -10,18 +10,11 @@ from app.utils.dataclass import DataclassBase
 
 
 class EnvironmentConfigurationService:
-    """Singleton service class for resolving ASG DNS configuration"""
+    """Service class for resolving ASG DNS configuration"""
 
-    _cache = {}
-
-    def __init__(self) -> None:
+    def __init__(self):
         # Cache placeholders
         self._cache = {}
-
-    @property
-    def is_development(self) -> bool:
-        """Returns True if the environment is development"""
-        return os.environ.get("DNS_DISCOVERY_ENVIRONMENT", "development").lower() == "development"
 
     @property
     def readiness_config(self) -> ReadinessConfig:

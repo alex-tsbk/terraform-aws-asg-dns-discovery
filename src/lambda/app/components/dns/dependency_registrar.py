@@ -7,7 +7,7 @@ from .dns_value_resolver_interface import DnsValueResolverInterface
 
 
 def register_services(di_container: DIContainer, env_config_service: EnvironmentConfigurationService):
-    """Registers DNS services concrete implementations in the DI container.
+    """Registers services concrete implementations in the DI container.
 
     Args:
         di_container (DIContainer): DI container

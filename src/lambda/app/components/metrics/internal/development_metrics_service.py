@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 from app.components.metrics.metrics_interface import MetricsInterface
 from app.utils.logging import get_logger
@@ -10,7 +10,7 @@ class DevelopmentMetricsService(MetricsInterface):
     def __init__(self):
         self._logger = get_logger()
         # Specify processing date time
-        self.processing_date_time = datetime.utcnow()
+        self.processing_date_time = datetime.datetime.now(datetime.UTC)
         # Metric data - records individual metrics for later publishing
         self.metric_data_points = []
         # Metric dimensions - shared across all metrics pushed
@@ -20,7 +20,7 @@ class DevelopmentMetricsService(MetricsInterface):
         """Resets the metrics service to a clean state"""
         self.metric_data_points = []
         self.metric_dimensions = []
-        self.processing_date_time = datetime.utcnow()
+        self.processing_date_time = datetime.datetime.now(datetime.UTC)
         return
 
     def record_data_point(

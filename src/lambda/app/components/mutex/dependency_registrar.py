@@ -1,8 +1,8 @@
 from app.config.env_configuration_service import EnvironmentConfigurationService
 from app.utils.di import DIContainer
 
-from .health_check_interface import HealthCheckInterface
-from .internal.health_check_service import HealthCheckService
+from .distributed_lock_interface import DistributedLockInterface
+from .internal.distributed_lock_service import DistributedLockService
 
 
 def register_services(di_container: DIContainer, env_config_service: EnvironmentConfigurationService):
@@ -11,5 +11,4 @@ def register_services(di_container: DIContainer, env_config_service: Environment
     Args:
         di_container (DIContainer): DI container
     """
-
-    di_container.register(HealthCheckInterface, HealthCheckService, lifetime="scoped")
+    di_container.register(DistributedLockInterface, DistributedLockService, lifetime="scoped")
