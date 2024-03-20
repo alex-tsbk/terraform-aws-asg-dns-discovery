@@ -1,3 +1,4 @@
+from app.config.env_configuration_service import EnvironmentConfigurationService
 from app.config.runtime_context import RuntimeContext
 from app.utils.di import DIContainer
 
@@ -5,7 +6,7 @@ from .dns_management_interface import DnsManagementInterface
 from .dns_value_resolver_interface import DnsValueResolverInterface
 
 
-def register_services(di_container: DIContainer):
+def register_services(di_container: DIContainer, env_config_service: EnvironmentConfigurationService):
     """Registers DNS services concrete implementations in the DI container.
 
     Args:

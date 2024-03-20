@@ -21,6 +21,12 @@ class CloudProviderException(Exception):
     def __repr__(self) -> str:
         return f"CloudProviderError({self.message}, {self.underlying_exception})"
 
+    def extract_code(self) -> str:
+        """Extracts the error code from the underlying exception"""
+        if self.is_aws():
+            return self.underlying_exception.response["Error"]["Code"]
+        return ""
+
     def is_aws(self) -> bool:
         """Returns True if the error is an AWS error, False otherwise"""
         if not RuntimeContext.is_aws:

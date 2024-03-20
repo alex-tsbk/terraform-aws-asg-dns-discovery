@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 from app.components.dns.internal.dns_value_resolver_base_service import DnsValueResolverService
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel, LifecycleTransition
-from app.config.configuration_service import ConfigurationService
+from app.config.env_configuration_service import EnvironmentConfigurationService
 from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
 from app.infrastructure.aws.asg_service import AutoScalingService
 from app.infrastructure.aws.ec2_service import Ec2Service
@@ -20,7 +20,7 @@ class AwsDnsValueResolverService(DnsValueResolverService):
         self,
         aws_ec2_service: Ec2Service,
         aws_asg_service: AutoScalingService,
-        configuration_service: ConfigurationService,
+        configuration_service: EnvironmentConfigurationService,
     ) -> None:
         self.aws_ec2_service = aws_ec2_service
         self.aws_asg_service = aws_asg_service

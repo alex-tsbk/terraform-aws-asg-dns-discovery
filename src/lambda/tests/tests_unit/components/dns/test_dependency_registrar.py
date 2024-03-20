@@ -10,7 +10,7 @@ from app.components.dns.internal.aws.aws_dns_value_resolver_service import AwsDn
 def test_register_services_when_running_on_aws(aws_runtime):
     di_container = MagicMock()
 
-    register_services(di_container)
+    register_services(di_container, MagicMock())
 
     di_container.register.assert_any_call(DnsManagementInterface, AwsDnsManagementService, lifetime="scoped")
     di_container.register.assert_any_call(DnsValueResolverInterface, AwsDnsValueResolverService, lifetime="scoped")

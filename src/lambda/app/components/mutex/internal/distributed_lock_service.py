@@ -1,18 +1,18 @@
 import time
 
-from app.infrastructure.aws.dynamodb_repository import DynamoDBRepository
-from app.utils.exceptions import CloudProviderException
+from app.components.mutex.distributed_lock_interface import DistributedLockInterface
+from app.components.persistence.repository_service_interface import RepositoryInterface
+from app.utils.exceptions import BusinessException, CloudProviderException
 from app.utils.logging import get_logger
 from app.utils.serialization import to_json
-from botocore.exceptions import ClientError
 
 
-class AwsDistributedLockService:
+class DistributedLockService(DistributedLockInterface):
     """Service class for acquiring and releasing shared state resource locks."""
 
-    def __init__(self, dynamodb_repository: DynamoDBRepository) -> None:
+    def __init__(self, repository: RepositoryInterface) -> None:
         self.logger = get_logger()
-        self.dynamodb_repository = dynamodb_repository
+        self.repository = repository
 
     def check_lock(self, resource_id: str) -> bool:
         """Checks if a lock exists on a resource.
@@ -27,11 +27,8 @@ class AwsDistributedLockService:
             CloudProviderException: When underlying cloud provider operation fails.
         """
         self.logger.debug(f"Checking lock for resource: {resource_id}")
-        try:
-            item = self.dynamodb_repository.get_item(resource_id)
-            self.logger.debug(f"check_lock item: {to_json(item)}")
-        except ClientError as e:
-            raise CloudProviderException(f"Error checking lock for resource: {resource_id}", e)
+        item = self.repository.get(resource_id)
+        self.logger.debug(f"check_lock item: {to_json(item)}")
         return bool(item)
 
     def acquire_lock(self, resource_id: str) -> bool:
@@ -46,19 +43,16 @@ class AwsDistributedLockService:
         Raises:
             CloudProviderException: When underlying cloud provider operation fails.
         """
+        self.logger.debug(f"Acquiring lock for resource: {resource_id}")
         try:
-            self.logger.debug(f"Acquiring lock for resource: {resource_id}")
-            response = self.dynamodb_repository.put_item(
-                item={"resource_id": resource_id, "timestamp": int(time.time())},
-                condition_expression="attribute_not_exists(resource_id)",
-            )
+            item = ({"resource_id": resource_id, "timestamp": int(time.time())},)
+            response = self.repository.create(resource_id, item)
             self.logger.debug(f"acquire_lock response: {to_json(response)}")
-            return True
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                return False
-            else:
-                raise CloudProviderException(f"Error acquiring lock for resource: {resource_id}", e)
+            return bool(response)
+        except CloudProviderException as e:
+            raise e
+        except Exception as e:
+            raise BusinessException(f"Error acquiring lock for resource: {resource_id}", e)
 
     def release_lock(self, resource_id: str) -> None:
         """Releases a lock on a resource.
@@ -71,6 +65,8 @@ class AwsDistributedLockService:
         """
         self.logger.debug(f"Releasing lock for resource: {resource_id}")
         try:
-            self.dynamodb_repository.delete_item(resource_id)
-        except ClientError as e:
-            raise CloudProviderException(f"Error releasing lock for resource: {resource_id}", e)
+            self.repository.delete(resource_id)
+        except CloudProviderException as e:
+            raise e
+        except Exception as e:
+            raise BusinessException(f"Error acquiring lock for resource: {resource_id}", e)

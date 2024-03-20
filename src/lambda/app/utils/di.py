@@ -3,8 +3,6 @@ from __future__ import annotations
 from inspect import signature
 from typing import Any, Type
 
-from app.utils.singleton import Singleton
-
 
 class DIContainer:
     """Simple DI container. Supports transient and scoped lifetimes.
@@ -20,13 +18,16 @@ class DIContainer:
                 self.foo = foo
 
         container = DIContainer()
-        container.register(Foo, Foo, lifetime="scoped")
-        container.register(Bar, Bar, lifetime="transient")
-        bar = container.build(Bar)
+        container.register(Foo, Foo, lifetime="scoped")  # will create a single instance of Foo and reuse it
+        container.register(Bar, Bar, lifetime="transient")  # will create a new instance of Bar every time it's resolved
+        foo1 = container.resolve(Foo)
+        foo2 = container.resolve(Foo)
+        # foo1 and foo2 are the same instance
+        bar1 = container.resolve(Bar)
+        bar2 = container.resolve(Bar)
+        # bar1 and bar2 are different instances
         ```
     """
-
-    _instance: "DIContainer" = None
 
     def __init__(self) -> None:
         self._services = {}
@@ -36,7 +37,19 @@ class DIContainer:
         key = (interface, name)
         self._services[key] = (implementation, lifetime)
 
-    def build(self, interface: Type, name: str = None) -> Any:
+    def resolve(self, interface: Type, name: str = None) -> Any:
+        """Resolves an instance of the given interface from the container.
+
+        Args:
+            interface (Type): Type of the interface to resolve.
+            name (str, optional): If named instance is required, provide name. Defaults to None.
+
+        Returns:
+            Any: Instance of the given interface.
+        """
+        return self._build(interface, name)
+
+    def _build(self, interface: Type, name: str = None) -> Any:
         key = (interface, name)
         if key not in self._services:
             raise ValueError(f"Service {interface.__name__} not registered.")
@@ -53,26 +66,14 @@ class DIContainer:
         else:
             raise ValueError(f"Unsupported lifetime {lifetime}.")
 
-    def resolve(self, interface: Type, name: str = None) -> Any:
-        """Resolves an instance of the given interface from the container.
-
-        Args:
-            interface (Type): _description_
-            name (str, optional): _description_. Defaults to None.
-
-        Returns:
-            Any: _description_
-        """
-        return self.build(interface, name)
-
     def _create_instance(self, cls: Type) -> Any:
-        """_summary_
+        """Creates an instance of the given class by resolving its dependencies.
 
         Args:
-            cls (Type): _description_
+            cls (Type): Type of the class to create.
 
         Returns:
-            Any: _description_
+            Any: Instance of the given class.
         """
         constructor = signature(cls.__init__)
         kwargs = {}
@@ -80,13 +81,5 @@ class DIContainer:
             if name == "self":
                 continue
             param_type = param.annotation
-            kwargs[name] = self.build(param_type)
+            kwargs[name] = self._build(param_type)
         return cls(**kwargs)
-
-
-# container = DIContainer()
-# container.register(Foo, Foo, lifetime="scoped")
-# container.register(Bar, Bar, lifetime="transient")
-
-# bar = container.build(Bar)
-# print(bar)

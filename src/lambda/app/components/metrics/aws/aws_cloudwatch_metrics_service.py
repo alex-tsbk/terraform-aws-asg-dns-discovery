@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from mypy_boto3_cloudwatch import CloudWatchClient
 
 from app.components.metrics.metrics_interface import MetricsInterface
-from app.config.configuration_service import ConfigurationService
+from app.config.env_configuration_service import EnvironmentConfigurationService
 from app.utils.exceptions import CloudProviderException
 from app.utils.logging import get_logger
 from app.utils.serialization import to_json
@@ -22,11 +22,11 @@ class AwsCloudwatchMetricsService(MetricsInterface):
     # Store CloudWatch client as class variable
     cloudwatch_client: ClassVar[CloudWatchClient] = boto3.client("cloudwatch")
 
-    def __init__(self, configuration_service: ConfigurationService):
+    def __init__(self, env_configuration_service: EnvironmentConfigurationService):
         self.logger = get_logger()
         # Specify processing date time
         self.processing_date_time = datetime.utcnow()
-        self.cloudwatch_metrics_namespace = configuration_service.metrics_config.metrics_namespace
+        self.cloudwatch_metrics_namespace = env_configuration_service.metrics_config.metrics_namespace
         # Metric data - records individual metrics for later publishing
         self.metric_data_points = []
         # Metric dimensions - shared across all metrics pushed

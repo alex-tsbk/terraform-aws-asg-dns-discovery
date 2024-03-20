@@ -1,13 +1,13 @@
 from app.components.metrics.internal.development_metrics_service import DevelopmentMetricsService
 from app.components.metrics.metrics_interface import MetricsInterface
-from app.config.configuration_service import ConfigurationService
+from app.config.env_configuration_service import EnvironmentConfigurationService
 from app.config.runtime_context import RuntimeContext
 
 
 class MetricsServiceFactory:
     """Factory for creating metrics service implementation based on config"""
 
-    def __init__(self, configuration_service: ConfigurationService) -> None:
+    def __init__(self, configuration_service: EnvironmentConfigurationService) -> None:
         self.config_service = configuration_service
 
     def create(self) -> MetricsInterface:

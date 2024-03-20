@@ -1,11 +1,11 @@
-from app.config.runtime_context import RuntimeContext
+from app.config.env_configuration_service import EnvironmentConfigurationService
 from app.utils.di import DIContainer
 
 from .health_check_interface import HealthCheckInterface
 from .internal.health_check_service import HealthCheckService
 
 
-def register_services(di_container: DIContainer):
+def register_services(di_container: DIContainer, env_config_service: EnvironmentConfigurationService):
     """Registers DNS services concrete implementations in the DI container.
 
     Args:
