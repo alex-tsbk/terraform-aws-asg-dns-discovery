@@ -35,7 +35,8 @@ variable "records" {
     # * 'ip:public' - will use public IP of the instance
     # * 'ip:private' - will use private IP of the instance
     # * 'tag:<tag_name>' - where <tag_name> is the name of the tag to use as the source for the DNS record value.
-    # IMPORTANT: If you're using private IPs, your lambda function must be in the same VPC as the ASG(s).
+    # IMPORTANT:
+    # * If you're using private IPs, your lambda function must be in the same VPC as the ASG(s).
     value_source = optional(string, "ip:private")
 
     # MULTIVALUE or SINGLE. 'MULTIVALUE' is default.
@@ -102,9 +103,11 @@ variable "records" {
     # ###
 
     # Scaling Group specific readiness check. If set, will override global readiness check.
+    # This is handy when you have different readiness criteria for different ASGs,
+    # or you want to disable readiness check for specific ASG, while having it enabled globally.
     readiness = optional(object({
-      # If true, the readiness check will be enabled. Disabled by default.
-      enabled = optional(bool, false)
+      # If true, the readiness check will be enabled. Enabled by default.
+      enabled = optional(bool, true)
       # Tag key to look for
       tag_key = string
       # Tag value to look for
@@ -119,10 +122,10 @@ variable "records" {
     # HEALTHCHECK
     # ###
 
-    # Health check to perform before adding EC2 instance to DNS record.
+    # Health check to perform before adding instance to DNS record.
     # Set to null to disable healthcheck overall.
     health_check = optional(object({
-      enabled         = bool
+      enabled         = optional(bool, true)
       path            = optional(string, "")
       port            = number
       protocol        = string

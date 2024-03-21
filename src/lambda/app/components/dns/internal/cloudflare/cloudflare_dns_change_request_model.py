@@ -6,8 +6,8 @@ from typing import override
 from app.components.dns.models.dns_change_request_model import DnsChangeRequestAction, DnsChangeRequestModel
 
 
-class AwsDnsChangeRequestModel(DnsChangeRequestModel):
-    """Model for AWS Route53 change request."""
+class CloudflareDnsChangeRequestModel(DnsChangeRequestModel):
+    """Model for Cloudflare change request."""
 
     # Private attributes
     _change: dict = field(init=False, repr=False, default_factory=dict)
@@ -37,11 +37,11 @@ class AwsDnsChangeRequestModel(DnsChangeRequestModel):
         return {"Changes": [self._change]}
 
     @override
-    def build_change(self) -> "AwsDnsChangeRequestModel":
+    def build_change(self) -> "CloudflareDnsChangeRequestModel":
         """Generate a change request for a record based on record type.
 
         Returns:
-            AwsDnsChangeRequestModel: The change request.
+            CloudflareDnsChangeRequestModel: The change request.
         """
         match self.record_type:
             case "A":
@@ -83,4 +83,4 @@ class AwsDnsChangeRequestModel(DnsChangeRequestModel):
         elif action == DnsChangeRequestAction.DELETE:
             return "DELETE"
 
-        raise ValueError(f"Unsupported action in 'AwsDnsChangeRequestModel': {action}")
+        raise ValueError(f"Unsupported action in 'CloudflareDnsChangeRequestModel': {action}")

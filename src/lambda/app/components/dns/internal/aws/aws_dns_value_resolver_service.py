@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-if TYPE_CHECKING:
-    from mypy_boto3_ec2.service_resource import Instance
-
 from app.components.dns.internal.dns_value_resolver_base_service import DnsValueResolverService
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel, LifecycleTransition
 from app.config.env_configuration_service import EnvironmentConfigurationService
 from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
-from app.infrastructure.aws.asg_service import AutoScalingService
-from app.infrastructure.aws.ec2_service import Ec2Service
+from app.infrastructure.aws.asg_service import AwsAutoScalingService
+from app.infrastructure.aws.ec2_service import AwsEc2Service
+
+if TYPE_CHECKING:
+    from mypy_boto3_ec2.service_resource import Instance
 
 
 class AwsDnsValueResolverService(DnsValueResolverService):
@@ -18,8 +18,8 @@ class AwsDnsValueResolverService(DnsValueResolverService):
 
     def __init__(
         self,
-        aws_ec2_service: Ec2Service,
-        aws_asg_service: AutoScalingService,
+        aws_ec2_service: AwsEc2Service,
+        aws_asg_service: AwsAutoScalingService,
         configuration_service: EnvironmentConfigurationService,
     ) -> None:
         self.aws_ec2_service = aws_ec2_service

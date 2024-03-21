@@ -1,16 +1,19 @@
 import os
 
+from app.utils.singleton import Singleton
 
-class RuntimeContext:
+
+class RuntimeContext(metaclass=Singleton):
     """Provides runtime context information - execution environment, cloud provider, etc."""
 
     @property
-    @staticmethod
-    def is_aws() -> bool:
+    def is_aws(self) -> bool:
         return os.environ.get("cloud_provider", "").lower() == "aws"
 
     @property
-    @staticmethod
-    def is_localhost_development() -> bool:
+    def is_localhost_development(self) -> bool:
         """Returns True if the environment is local development, False otherwise."""
         return os.environ.get("SG_DNS_DISCOVERY__ENVIRONMENT", "").lower() == "development"
+
+
+RUNTIME_CONTEXT = RuntimeContext()

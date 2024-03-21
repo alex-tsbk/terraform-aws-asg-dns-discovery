@@ -1,33 +1,31 @@
 from time import sleep
 from typing import TYPE_CHECKING
 
-from app.components.readiness.readiness_interface import ReadinessInterface
+from app.components.readiness.instance_readiness_interface import InstanceReadinessInterface
 from app.config.models.readiness_config import ReadinessConfig
-from app.infrastructure.aws.ec2_service import Ec2Service
+from app.infrastructure.aws.ec2_service import AwsEc2Service
 from app.utils.logging import get_logger
 
 if TYPE_CHECKING:
     from mypy_boto3_ec2.service_resource import Instance
 
 
-class AwsReadinessService(ReadinessInterface):
-    """Implementation of ReadinessInterface for checking readiness of AWS EC2 instance.
+class AwsInstanceReadinessService(InstanceReadinessInterface):
+    """AWS EC2 Instance Readiness service implementation."""
 
-    Args:
-        ReadinessInterface (_type_): _description_
-    """
-
-    def __init__(self, ec2_service: Ec2Service) -> None:
+    def __init__(self, ec2_service: AwsEc2Service) -> None:
         self.logger = get_logger()
         self.ec2_service = ec2_service
 
     def is_ready(self, instance_id: str, readiness_config: ReadinessConfig, wait: bool) -> bool:
-        """Checks if the instance is ready.
+        """Checks whether the instance is ready. If wait is set to True, the method will wait for the instance
+        to become ready in accordance with the readiness_config provided.
 
         Args:
             instance_id (str): Instance ID
             readiness_config (ReadinessConfig): Readiness configuration
-            wait (bool): Whether to wait for the instance to become ready
+            wait (bool): When set to True, the method will wait for the instance
+                to become ready in accordance with the readiness_config provided
 
         Returns:
             bool: True if service is ready, False otherwise

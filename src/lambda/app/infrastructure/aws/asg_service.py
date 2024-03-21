@@ -3,18 +3,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 import boto3
+from app.infrastructure.aws import boto_config
+from app.utils.exceptions import CloudProviderException
+from app.utils.logging import get_logger
+from app.utils.serialization import to_json
+from app.utils.singleton import Singleton
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from mypy_boto3_autoscaling.client import AutoScalingClient
     from mypy_boto3_autoscaling.type_defs import FilterTypeDef
 
-from app.infrastructure.aws import boto_config
-from app.utils.logging import get_logger
-from app.utils.serialization import to_json
 
-
-class AutoScalingService:
+class AwsAutoScalingService(metaclass=Singleton):
     """Service class for interacting with Auto-Scaling Groups."""
 
     def __init__(self):
@@ -40,6 +41,9 @@ class AutoScalingService:
 
         Returns:
             dict[str, list[str]]: A dictionary with the ASG name as the key and a list of EC2 instance IDs as the value.
+
+        Raises:
+            CloudProviderException: When call fails to underlying boto3 function
         """
         kwargs = {"AutoScalingGroupNames": autoscaling_group_names}
         if tag_filters:
@@ -63,8 +67,7 @@ class AutoScalingService:
                     ]
         except ClientError as e:
             message = f"Error listing ASG running EC2 instances: {str(e)}"
-            self.logger.error(message)
-            raise e
+            raise CloudProviderException(e, message)
 
         return asg_ec2_instances
 
@@ -94,7 +97,7 @@ class AutoScalingService:
             ec2_instance_id [str]: EC2 instance ID.
 
         Raises:
-            ClientError: When call fails to underlying boto3 function
+            CloudProviderException: When call fails to underlying boto3 function
         """
         try:
             response = self.autoscaling_client.complete_lifecycle_action(
@@ -107,5 +110,4 @@ class AutoScalingService:
             self.logger.debug(f"complete_lifecycle_action response: {to_json(response)}")
         except ClientError as e:
             message = f"Error completing lifecycle action: {str(e)}"
-            self.logger.error(message)
-            raise e
+            raise CloudProviderException(e, message)

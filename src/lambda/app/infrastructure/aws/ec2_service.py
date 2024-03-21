@@ -6,13 +6,14 @@ import boto3
 from app.infrastructure.aws import boto_config
 from app.utils.exceptions import CloudProviderException
 from app.utils.logging import get_logger
+from app.utils.singleton import Singleton
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from mypy_boto3_ec2.service_resource import EC2ServiceResource, Instance
 
 
-class Ec2Service:
+class AwsEc2Service(metaclass=Singleton):
     """Service class for interacting with EC2."""
 
     def __init__(self):
@@ -34,8 +35,6 @@ class Ec2Service:
             if e.response["Error"]["Code"] == "InvalidInstanceID.NotFound":
                 raise CloudProviderException(e, f"EC2 instance with ID {instance_id} not found")
             raise CloudProviderException(e, f"Boto3 error while fetching instance with id {instance_id}: {e}")
-        except Exception as e:
-            raise CloudProviderException(e, f"Failed to get EC2 instance with ID {instance_id}: {e}")
 
     def get_instances(self, instance_ids: list[str]) -> list[Instance]:
         """Returns EC2 instance objects by instance IDs

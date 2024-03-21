@@ -21,8 +21,8 @@ class AwsDynamoDBRepository(RepositoryInterface[str, dict]):
     def __init__(self, environment_configuration_service: EnvironmentConfigurationService):
         self.logger = get_logger()
         self.dynamodb: DynamoDBServiceResource = boto3.resource("dynamodb", config=boto_config.CONFIG)
-        table_name = environment_configuration_service.db_config.table_name
-        self.table: Table = self.dynamodb.Table(table_name)
+        dynamodb_table_name = environment_configuration_service.db_config.table_name
+        self.table: Table = self.dynamodb.Table(dynamodb_table_name)
 
     def get(self, key: str) -> dict:
         """Get item from DynamoDB table.

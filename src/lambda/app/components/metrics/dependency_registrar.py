@@ -1,5 +1,5 @@
 from app.config.env_configuration_service import EnvironmentConfigurationService
-from app.config.runtime_context import RuntimeContext
+from app.config.runtime_context import RUNTIME_CONTEXT
 from app.utils.di import DIContainer
 
 from .internal.development_metrics_service import DevelopmentMetricsService
@@ -12,11 +12,11 @@ def register_services(di_container: DIContainer, env_config_service: Environment
     Args:
         di_container (DIContainer): DI container
     """
-    if RuntimeContext.is_localhost_development:
+    if RUNTIME_CONTEXT.is_localhost_development:
         di_container.register(MetricsInterface, DevelopmentMetricsService, lifetime="scoped")
 
     metrics_provider = env_config_service.metrics_config.metrics_provider
-    if RuntimeContext.is_aws and metrics_provider == "cloudwatch":
-        from app.components.metrics.aws.aws_cloudwatch_metrics_service import AwsCloudwatchMetricsService
+    if RUNTIME_CONTEXT.is_aws and metrics_provider == "cloudwatch":
+        from app.components.metrics.internal.aws.aws_cloudwatch_metrics_service import AwsCloudwatchMetricsService
 
         di_container.register(MetricsInterface, AwsCloudwatchMetricsService, lifetime="scoped")

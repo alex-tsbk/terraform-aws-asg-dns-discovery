@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from inspect import signature
-from typing import Any, Type
+from typing import Any, NewType, Type
+
+NamedDependency = NewType("NamedDependency", tuple[Type, str])
 
 
 class DIContainer:
@@ -37,6 +39,22 @@ class DIContainer:
         key = (interface, name)
         self._services[key] = (implementation, lifetime)
 
+    def register_instance(self, instance: Any, name: str = None, allow_override: bool = False):
+        """Registers an instance in the container.
+
+        Args:
+            instance (Any): Instance to register.
+            name (str, optional): When provided, will be a named instance. Defaults to None.
+            allow_override (bool, optional): When set to True, allows overriding existing instance. Defaults to False.
+
+        Raises:
+            ValueError: If instance with the same name is already registered and allow_override is False.
+        """
+        key = (type(instance), name)
+        if key in self._services and not allow_override:
+            raise ValueError(f"Service {key} is already registered. Please set allow_override to True to override.")
+        self._services[key] = (instance, "instance")
+
     def resolve(self, interface: Type, name: str = None) -> Any:
         """Resolves an instance of the given interface from the container.
 
@@ -55,7 +73,9 @@ class DIContainer:
             raise ValueError(f"Service {interface.__name__} not registered.")
         implementation, lifetime = self._services[key]
 
-        if lifetime == "scoped":
+        if lifetime == "instance":
+            return implementation
+        elif lifetime == "scoped":
             if key in self._scoped_instances:
                 return self._scoped_instances[key]
             instance = self._create_instance(implementation)
@@ -81,5 +101,10 @@ class DIContainer:
             if name == "self":
                 continue
             param_type = param.annotation
-            kwargs[name] = self._build(param_type)
+
+            if isinstance(param_type, type(NamedDependency)):
+                param_type, name = param_type
+                kwargs[name] = self._build(param_type, name)
+            else:
+                kwargs[name] = self._build(param_type)
         return cls(**kwargs)

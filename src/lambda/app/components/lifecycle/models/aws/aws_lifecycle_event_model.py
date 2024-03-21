@@ -27,7 +27,7 @@ class AwsLifecycleEventModel(LifecycleEventModel):
     origin: str  # Describes the origin state of the VM
     destination: str  # Describes the destination state of the VM
     service: str  # Service that triggered the event
-    deduplication_token: str  # Token to prevent duplicate processing of lifecycle event
+    lifecycle_action_token: str  # Token to prevent duplicate processing of lifecycle event
     lifecycle_transition: str  # In AWS:autoscaling:EC2_INSTANCE_TERMINATING
     notification_metadata: dict  # Notification metadata
 
@@ -36,17 +36,9 @@ class AwsLifecycleEventModel(LifecycleEventModel):
         origin = data.get("Origin")
         destination = data.get("Destination")
 
-        def determine_transition(origin: str, destination: str) -> LifecycleTransition:
-            if origin == "AutoScalingGroup" and destination == ["EC2", "WarmPool"]:
-                return LifecycleTransition.DRAINING
-            elif origin in ["EC2", "WarmPool"] and destination == "AutoScalingGroup":
-                return LifecycleTransition.LAUNCHING
-            # If the origin and destination are not related to the lifecycle event
-            return LifecycleTransition.UNRELATED
-
         params = {
             # Base fields
-            "transition": determine_transition(origin, destination),
+            "transition": cls._determine_transition(origin, destination),
             "lifecycle_hook_name": data.get("LifecycleHookName"),
             "scaling_group_name": data.get("AutoScalingGroupName"),
             "instance_id": data.get("EC2InstanceId"),
@@ -54,7 +46,28 @@ class AwsLifecycleEventModel(LifecycleEventModel):
             "origin": origin,
             "destination": destination,
             "service": data.get("Service"),
-            "deduplication_token": data.get("LifecycleActionToken"),
+            "lifecycle_action_token": data.get("LifecycleActionToken"),
             "lifecycle_transition": data.get("LifecycleTransition"),
         }
         return cls(**params)
+
+    @classmethod
+    def _determine_transition(cls, origin: str, destination: str) -> LifecycleTransition:
+        """Based on the origin and destination states, determine the lifecycle transition
+
+        Args:
+            origin (str): Source state of the EC2 instance (e.g. AutoScalingGroup, EC2, WarmPool)
+            destination (str): Destination state of the EC2 instance (e.g. AutoScalingGroup, EC2, WarmPool)
+
+        Returns:
+            LifecycleTransition: Lifecycle transition based on the combination of origin and destination states
+
+        Reference:
+            https://docs.aws.amazon.com/autoscaling/ec2/userguide/lifecycle-hooks.html
+        """
+        if origin == "AutoScalingGroup" and destination == ["EC2", "WarmPool"]:
+            return LifecycleTransition.DRAINING
+        elif origin in ["EC2", "WarmPool"] and destination == "AutoScalingGroup":
+            return LifecycleTransition.LAUNCHING
+        # If the origin and destination are not related to the lifecycle event
+        return LifecycleTransition.UNRELATED

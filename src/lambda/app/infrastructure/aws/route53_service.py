@@ -3,19 +3,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import boto3
-from botocore.exceptions import ClientError
-
-if TYPE_CHECKING:
-    from mypy_boto3_route53.client import Route53Client
-
 from app.components.dns.internal.aws.aws_dns_change_request_model import AwsDnsChangeRequestModel
 from app.infrastructure.aws import boto_config
 from app.utils.exceptions import CloudProviderException
 from app.utils.logging import get_logger
 from app.utils.serialization import to_json
+from app.utils.singleton import Singleton
+from botocore.exceptions import ClientError
+
+if TYPE_CHECKING:
+    from mypy_boto3_route53.client import Route53Client
 
 
-class Route53Service:
+class Route53Service(metaclass=Singleton):
     """
     Service class for managing DNS records using AWS Route53.
     """
@@ -45,8 +45,7 @@ class Route53Service:
             return hosted_zone_name
         except ClientError as e:
             message = f"Error getting hosted zone name: {str(e)}"
-            self.logger.error(message)
-            raise CloudProviderException(message, e)
+            raise CloudProviderException(e, message)
 
     def read_record(self, hosted_zone_id: str, record_name: str, record_type: str) -> dict:
         """Get information about a specific record.
@@ -68,8 +67,7 @@ class Route53Service:
             return None
         except ClientError as e:
             message = f"Error reading record: {str(e)}"
-            self.logger.error(message)
-            raise CloudProviderException(message, e)
+            raise CloudProviderException(e, message)
 
     def change_resource_record_sets(self, hosted_zone_id: str, change: AwsDnsChangeRequestModel) -> None:
         """Create, change, or delete a resource record set.
@@ -108,5 +106,4 @@ class Route53Service:
             self.logger.debug(f"Resource record sets changed: {response['ChangeInfo']['Id']}")
         except ClientError as e:
             message = f"Error changing resource record sets: {str(e)}"
-            self.logger.error(message)
-            raise CloudProviderException(message, e)
+            raise CloudProviderException(e, message)

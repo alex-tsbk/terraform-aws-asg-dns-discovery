@@ -4,9 +4,9 @@ import logging
 import os
 from functools import cache
 
-from app.config.runtime_context import RuntimeContext
+from app.config.runtime_context import RUNTIME_CONTEXT
 
-if RuntimeContext.is_aws:
+if RUNTIME_CONTEXT.is_aws:
     # Reduce boto3 logging noise for third-party libraries
     logging.getLogger("boto3").setLevel(logging.ERROR)
     logging.getLogger("botocore").setLevel(logging.ERROR)

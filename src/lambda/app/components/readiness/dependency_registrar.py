@@ -1,8 +1,8 @@
 from app.config.env_configuration_service import EnvironmentConfigurationService
-from app.config.runtime_context import RuntimeContext
+from app.config.runtime_context import RUNTIME_CONTEXT
 from app.utils.di import DIContainer
 
-from .readiness_interface import ReadinessInterface
+from .instance_readiness_interface import InstanceReadinessInterface
 
 
 def register_services(di_container: DIContainer, env_config_service: EnvironmentConfigurationService):
@@ -11,7 +11,7 @@ def register_services(di_container: DIContainer, env_config_service: Environment
     Args:
         di_container (DIContainer): DI container
     """
-    if RuntimeContext.is_aws:
-        from .internal.aws.aws_readiness_service import AwsReadinessService
+    if RUNTIME_CONTEXT.is_aws:
+        from .internal.aws.aws_readiness_service import AwsInstanceReadinessService
 
-        di_container.register(ReadinessInterface, AwsReadinessService, lifetime="scoped")
+        di_container.register(InstanceReadinessInterface, AwsInstanceReadinessService, lifetime="scoped")
