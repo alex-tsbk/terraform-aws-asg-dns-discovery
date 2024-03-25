@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -16,7 +17,7 @@ class LifecycleTransition(Enum):
     # - Instance moving from WarmPool into the fleet
     # Important: Does not apply when you attach or detach instances,
     # move instances in and out of standby mode, or delete the group with the force delete option.
-    # For these actions, must use reconciliation service to handle such transitions.
+    # For these actions, must enable reconciliation service to handle such transitions.
     LAUNCHING = "LAUNCHING"
     # In the context of AWS AutoScaling Lifecycle Hooks this would represent:
     # - Instance terminating from ASG and leaves the fleet

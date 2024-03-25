@@ -1,5 +1,5 @@
 import pytest
-from app.utils.di import DIContainer
+from app.utils.di import DIContainer, NamedDependency
 
 
 class Foo:
@@ -88,3 +88,21 @@ def test_register_instance_with_same_name_allows_override_when_allow_override_is
     di_container.register_instance(foo_instance2, name="foo_instance", allow_override=True)
     resolved_instance = di_container.resolve(Foo, name="foo_instance")
     assert resolved_instance is foo_instance2
+
+
+class Baz:
+    pass
+
+
+class Qux:
+    def __init__(self, foo: NamedDependency[Foo, "foo"]):  # noqa: F821
+        self.foo = foo
+
+
+def test_resolve_annotated_type_should_inject_correct_named_registered_instance(di_container):
+    container = DIContainer()
+    container.register(Foo, Baz, lifetime="scoped")
+    container.register(Foo, Foo, lifetime="scoped", name="foo")
+    container.register(Qux, Qux, lifetime="transient")
+    qux = container.resolve(Qux)
+    assert isinstance(qux.foo, Foo)

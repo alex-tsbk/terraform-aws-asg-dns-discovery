@@ -32,9 +32,9 @@ class DnsChangeRequestModel(DataclassBase):
     # The action to perform. Example: UPDATE, CREATE, DELETE.
     action: DnsChangeRequestAction
     # Name of the record to change. Example: myapp.example.com or myapp.
-    record_name: str
+    record_name: str = field(default="")
     # Type of the record. Example: A, CNAME, TXT, etc.
-    record_type: str
+    record_type: str = field(default="")
     # Time to live for the record.
     record_ttl: int = field(default=300)
     # Weight for weighted records. Used only for records with a type of SRV or TXT.
@@ -46,6 +46,13 @@ class DnsChangeRequestModel(DataclassBase):
 
     def __post_init__(self):
         self.record_type = self.record_type.upper()
+
+        # Ensure required fields are set for non-IGNORE actions
+        if self.action != DnsChangeRequestAction.IGNORE:
+            if not self.record_name:
+                raise ValueError(f"Record name is required for DNS change request action '{self.action.value}'")
+            if not self.record_type:
+                raise ValueError(f"Record type is required for DNS change request action '{self.action.value}'")
 
     def __str__(self) -> str:
         return f"{self.record_name}/{self.record_type}/{self.action}/{', '.join(self.record_values)}"

@@ -1,9 +1,9 @@
 from app.components.dns.dns_management_interface import DnsManagementInterface
-from app.components.dns.dns_value_resolver_interface import DnsValueResolverInterface
 from app.components.dns.internal.cloudflare.cloudflare_dns_change_request_model import CloudflareDnsChangeRequestModel
 from app.components.dns.models.dns_change_request_model import DnsChangeRequestAction, DnsChangeRequestModel
 from app.components.dns.models.dns_change_response_model import DnsChangeResponseModel
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel, LifecycleTransition
+from app.components.metadata.instance_metadata_interface import InstanceMetadataInterface
 from app.config.models.scaling_group_dns_config import DnsRecordMappingMode, ScalingGroupConfiguration
 from app.infrastructure.cloudflare.cloudflare_service import CloudflareService
 from app.utils.logging import get_logger
@@ -13,10 +13,10 @@ from app.utils.serialization import to_json
 class CloudflareDnsManagementService(DnsManagementInterface):
     """Service for managing DNS records in AWS environment."""
 
-    def __init__(self, dns_service: CloudflareService, value_resolver_service: DnsValueResolverInterface) -> None:
+    def __init__(self, dns_service: CloudflareService, instance_metadata_service: InstanceMetadataInterface) -> None:
         self.logger = get_logger()
         self.dns_service = dns_service
-        self.value_resolver_service = value_resolver_service
+        self.instance_metadata_service = instance_metadata_service
 
     def generate_change_request(
         self, sg_config_item: ScalingGroupConfiguration, lifecycle_event: LifecycleEventModel
@@ -39,7 +39,7 @@ class CloudflareDnsManagementService(DnsManagementInterface):
 
         # record_name = self._normalize_record_name(record_name, hosted_zone_id)
         # record = self.dns_service.read_record(hosted_zone_id, record_name, record_type)
-        # resolved_values = self.value_resolver_service.resolve_dns_value(sg_config_item, lifecycle_event)
+        # resolved_values = self.instance_metadata_service.resolve_value(sg_config_item, lifecycle_event)
 
         # if lifecycle_event.transition == LifecycleTransition.DRAINING:
         #     return self._handle_draining(sg_config_item, record, resolved_values)

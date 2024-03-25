@@ -8,22 +8,23 @@ from app.utils.exceptions import BusinessException
 
 
 class RuntimeConfigurationService:
-    """Singleton service class for resolving ASG DNS configuration"""
+    """Service class for resolving application configuration from storage at runtime."""
 
-    def __init__(self, repository: RepositoryInterface, environment_config: EnvironmentConfigurationService):
+    def __init__(
+        self,
+        repository: RepositoryInterface,
+        environment_config: EnvironmentConfigurationService,
+    ):
         # Cache placeholder
         self._cache = {}
         self.repository = repository
         self.environment_config = environment_config
 
-    def get_asg_dns_configs(self) -> ScalingGroupConfigurations:
-        """Resolves ASG DNS configurations for all ASGs from DynamoDB
-
-        Args:
-            asg_name (str): AutoScalingGroup name
+    def get_scaling_groups_dns_configs(self) -> ScalingGroupConfigurations:
+        """Resolves Scaling Groups DNS configurations for all Scaling Groups from repository.
 
         Returns:
-            dict: ASG DNS configuration
+            ScalingGroupConfigurations: Object containing all Scaling Group DNS configurations.
         """
         if cached_item := self._cache.get("cached_asg_config", None):
             return cached_item

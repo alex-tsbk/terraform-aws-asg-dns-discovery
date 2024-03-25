@@ -1,9 +1,25 @@
 from __future__ import annotations
 
 from inspect import signature
-from typing import Any, NewType, Type
+from typing import Annotated, Any, Type, TypeVar
 
-NamedDependency = NewType("NamedDependency", tuple[Type, str])
+T = TypeVar("T")
+# Use this annotation to inject named dependency registered in the container.
+# Example:
+# class Foo:
+#     def __init__(self):
+#         pass
+#
+# class Bar:
+#     def __init__(self, foo: NamedDependency[Foo, "foo"]):
+#         self.foo = foo
+#
+# container = DIContainer()
+# container.register(Foo, Foo, lifetime="scoped", name="foo")
+# container.register(Bar, Bar, lifetime="transient")
+# bar = container.resolve(Bar)
+# assert isinstance(bar.foo, Foo)
+NamedDependency = Annotated
 
 
 class DIContainer:
@@ -102,9 +118,11 @@ class DIContainer:
                 continue
             param_type = param.annotation
 
-            if isinstance(param_type, type(NamedDependency)):
-                param_type, name = param_type
-                kwargs[name] = self._build(param_type, name)
+            # Check if param_type is NamedDependency
+            if param_type.__name__ == NamedDependency.__name__:
+                dependency_type = param_type.__origin__
+                dependency_name = param_type.__metadata__[0]
+                kwargs[name] = self._build(dependency_type, dependency_name)
             else:
                 kwargs[name] = self._build(param_type)
         return cls(**kwargs)

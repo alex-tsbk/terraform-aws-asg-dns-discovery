@@ -1,9 +1,10 @@
 from app.components.dns.dns_management_interface import DnsManagementInterface
-from app.components.dns.dns_value_resolver_interface import DnsValueResolverInterface
 from app.components.dns.internal.aws.aws_dns_change_request_model import AwsDnsChangeRequestModel
 from app.components.dns.models.dns_change_request_model import DnsChangeRequestAction, DnsChangeRequestModel
 from app.components.dns.models.dns_change_response_model import DnsChangeResponseModel
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel, LifecycleTransition
+from app.components.metadata.instance_metadata_interface import InstanceMetadataInterface
+from app.components.metadata.models.metadata_result_model import MetadataResultModel
 from app.config.models.scaling_group_dns_config import DnsRecordMappingMode, ScalingGroupConfiguration
 from app.infrastructure.aws.route53_service import Route53Service
 from app.utils.logging import get_logger
@@ -13,10 +14,14 @@ from app.utils.serialization import to_json
 class AwsDnsManagementService(DnsManagementInterface):
     """Service for managing DNS records in AWS environment."""
 
-    def __init__(self, dns_service: Route53Service, value_resolver_service: DnsValueResolverInterface) -> None:
+    def __init__(
+        self,
+        dns_service: Route53Service,
+        instance_metadata_service: InstanceMetadataInterface,
+    ) -> None:
         self.logger = get_logger()
         self.dns_service = dns_service
-        self.value_resolver_service = value_resolver_service
+        self.instance_metadata_service = instance_metadata_service
 
     def generate_change_request(
         self, sg_config_item: ScalingGroupConfiguration, lifecycle_event: LifecycleEventModel
@@ -39,7 +44,9 @@ class AwsDnsManagementService(DnsManagementInterface):
 
         record_name = self._normalize_record_name(record_name, hosted_zone_id)
         record = self.dns_service.read_record(hosted_zone_id, record_name, record_type)
-        resolved_values = self.value_resolver_service.resolve_dns_value(sg_config_item, lifecycle_event)
+        resolved_values: list[MetadataResultModel] = self.instance_metadata_service.resolve_value(
+            sg_config_item, lifecycle_event
+        )
 
         if lifecycle_event.transition == LifecycleTransition.DRAINING:
             return self._handle_draining(sg_config_item, record, resolved_values)
@@ -87,7 +94,7 @@ class AwsDnsManagementService(DnsManagementInterface):
         return record_name
 
     def _handle_draining(
-        self, sg_config_item: ScalingGroupConfiguration, record: dict, resolved_values: list[str]
+        self, sg_config_item: ScalingGroupConfiguration, record: dict, resolved_values: list[MetadataResultModel]
     ) -> DnsChangeRequestModel:
         """
         Handle the draining lifecycle event.
@@ -95,7 +102,7 @@ class AwsDnsManagementService(DnsManagementInterface):
         Args:
             sg_config_item [ScalingGroupConfiguration]: The Scaling Group DNS configuration item.
             record [dict]: The Route53 record.
-            resolved_values [list[str]]: The resolved values for the current lifecycle.
+            resolved_values [list[MetadataResultModel]]: The resolved values for the current lifecycle.
 
         Returns:
             DnsChangeRequestModel: The change request model.
@@ -104,19 +111,13 @@ class AwsDnsManagementService(DnsManagementInterface):
         record_type = sg_config_item.dns_config.record_type
 
         if not record:
-            return AwsDnsChangeRequestModel(
-                action=DnsChangeRequestAction.IGNORE,
-                record_name=record_name,
-                record_type=record_type,
-            )
+            return AwsDnsChangeRequestModel(action=DnsChangeRequestAction.IGNORE)
+
         # Extract the current values from the record
         current_record_values_original = self._extract_values_from_route53_record(sg_config_item, record)
         if not current_record_values_original:
-            return AwsDnsChangeRequestModel(
-                action=DnsChangeRequestAction.IGNORE,
-                record_name=record_name,
-                record_type=record_type,
-            )
+            return AwsDnsChangeRequestModel(action=DnsChangeRequestAction.IGNORE)
+
         # Create duplicate of the current values, to preserve the original values in case we need to remove the record
         # Also, since we're draining, we want to remove the resolved value from the record set
         current_record_values_altered = [
@@ -152,41 +153,47 @@ class AwsDnsManagementService(DnsManagementInterface):
         )
 
     def _handle_launching(
-        self, sg_config_item: ScalingGroupConfiguration, record: dict, resolved_values: list[str]
+        self, sg_config_item: ScalingGroupConfiguration, record: dict, resolved_values: list[MetadataResultModel]
     ) -> DnsChangeRequestModel:
         """Handle the launching lifecycle event.
 
         Args:
             sg_config_item [ScalingGroupConfiguration]: The Scaling Group DNS configuration item.
             record [dict]: The Route53 record.
-            resolved_values [list[str]]: The resolved values for the current lifecycle.
+            resolved_values [list[MetadataResultModel]]: The resolved values for the current lifecycle.
 
         Returns:
             DnsChangeRequestModel: The change request model.
         """
-        IGNORE_CHANGE_REQUEST = AwsDnsChangeRequestModel(
-            action=DnsChangeRequestAction.IGNORE,
-            record_name=sg_config_item.dns_config.record_name,
-            record_type=sg_config_item.dns_config.record_type,
-        )
+        IGNORE_CHANGE_REQUEST = AwsDnsChangeRequestModel(action=DnsChangeRequestAction.IGNORE)
         if not resolved_values:
             # If no resolved values, ignore the change
             return IGNORE_CHANGE_REQUEST
 
         current_record_values = self._extract_values_from_route53_record(sg_config_item, record)
+        resolved_values_destinations = [result.value for result in resolved_values]
         # If resolved_values a subset of current_record_values, ignore the change
-        if set(resolved_values).issubset(set(current_record_values)):
+        if set(resolved_values_destinations).issubset(set(current_record_values)):
             return IGNORE_CHANGE_REQUEST
 
         # Augment current record values with resolved values
-        current_record_values.extend(resolved_values)
+        current_record_values.extend(resolved_values_destinations)
         # Remove duplicates
         current_record_values = list(set(current_record_values))
         # Create a change request
         action = DnsChangeRequestAction.CREATE if not record else DnsChangeRequestAction.UPDATE
-        record_values = (
-            current_record_values if sg_config_item.mode == DnsRecordMappingMode.MULTIVALUE else [resolved_values[0]]
-        )
+        # Determine the record values based on the mapping mode
+        record_values = None
+        if sg_config_item.mode == DnsRecordMappingMode.MULTIVALUE:
+            record_values = resolved_values_destinations
+
+        if sg_config_item.mode == DnsRecordMappingMode.SINGLE:
+            record_values = [next(sorted(resolved_values, key=lambda x: x.instance_launch_timestamp, reverse=True))]
+
+        if record_values is None:
+            # TODO: Revisit this edge case
+            return IGNORE_CHANGE_REQUEST
+
         return AwsDnsChangeRequestModel(
             action=action,
             record_values=record_values,
@@ -196,32 +203,39 @@ class AwsDnsManagementService(DnsManagementInterface):
         )
 
     def _handle_reconciliation(
-        self, sg_config_item: ScalingGroupConfiguration, record: dict, resolved_values: list[str]
+        self, sg_config_item: ScalingGroupConfiguration, record: dict, resolved_values: list[MetadataResultModel]
     ) -> DnsChangeRequestModel:
         """Handle the reconciliation lifecycle event.
 
         Args:
             sg_config_item [ScalingGroupConfiguration]: The Scaling Group DNS configuration item.
             record [dict]: The Route53 record.
-            resolved_values [list[str]]: The resolved values for the current lifecycle.
+            resolved_values [list[MetadataResultModel]]: The resolved values for the current lifecycle.
 
         Returns:
             DnsChangeRequestModel: The change request model.
         """
-        IGNORE_CHANGE_REQUEST = AwsDnsChangeRequestModel(
-            action=DnsChangeRequestAction.IGNORE,
-            record_name=sg_config_item.dns_config.record_name,
-            record_type=sg_config_item.dns_config.record_type,
-        )
+        IGNORE_CHANGE_REQUEST = AwsDnsChangeRequestModel(action=DnsChangeRequestAction.IGNORE)
         current_record_values = self._extract_values_from_route53_record(sg_config_item, record)
+        resolved_values_destinations = [result.value for result in resolved_values]
         # If current values are the same as resolved values, ignore the change
-        if current_record_values == resolved_values:
+        if current_record_values == resolved_values_destinations:
             return IGNORE_CHANGE_REQUEST
         # If resolved values are different from current values, create a change request
         action = DnsChangeRequestAction.UPDATE if record else DnsChangeRequestAction.CREATE
-        record_values = (
-            resolved_values if sg_config_item.mode == DnsRecordMappingMode.MULTIVALUE else [resolved_values[0]]
-        )
+
+        # Determine the record values based on the mapping mode
+        record_values = None
+        if sg_config_item.mode == DnsRecordMappingMode.MULTIVALUE:
+            record_values = resolved_values_destinations
+
+        if sg_config_item.mode == DnsRecordMappingMode.SINGLE:
+            record_values = [next(sorted(resolved_values, key=lambda x: x.instance_launch_timestamp, reverse=True))]
+
+        if record_values is None:
+            # TODO: Revisit this edge case
+            return IGNORE_CHANGE_REQUEST
+
         return AwsDnsChangeRequestModel(
             action=action,
             record_values=record_values,

@@ -15,8 +15,8 @@ if TYPE_CHECKING:
     from mypy_boto3_autoscaling.type_defs import FilterTypeDef
 
 
-class AwsAutoScalingService(metaclass=Singleton):
-    """Service class for interacting with Auto-Scaling Groups."""
+class AwsEc2AutoScalingService(metaclass=Singleton):
+    """Service class for interacting with AWS EC2 Auto-Scaling Groups."""
 
     def __init__(self):
         self.logger = get_logger()
@@ -66,8 +66,7 @@ class AwsAutoScalingService(metaclass=Singleton):
                         if instance["LifecycleState"] in lifecycle_states
                     ]
         except ClientError as e:
-            message = f"Error listing ASG running EC2 instances: {str(e)}"
-            raise CloudProviderException(e, message)
+            raise CloudProviderException(e, f"Error listing ASG running EC2 instances: {str(e)}")
 
         return asg_ec2_instances
 
@@ -109,5 +108,4 @@ class AwsAutoScalingService(metaclass=Singleton):
             )
             self.logger.debug(f"complete_lifecycle_action response: {to_json(response)}")
         except ClientError as e:
-            message = f"Error completing lifecycle action: {str(e)}"
-            raise CloudProviderException(e, message)
+            raise CloudProviderException(e, f"Error completing lifecycle action: {str(e)}")

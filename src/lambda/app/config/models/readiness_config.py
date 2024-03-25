@@ -1,8 +1,10 @@
 from dataclasses import asdict, dataclass, field
 
+from app.utils.dataclass import DataclassBase
+
 
 @dataclass(frozen=True)
-class ReadinessConfig:
+class ReadinessConfig(DataclassBase):
     # When set to true, the readiness check is enabled
     enabled: bool = field(default=False)
     # The interval in seconds to check the readiness of the instance
@@ -13,6 +15,10 @@ class ReadinessConfig:
     tag_key: str = field(default="app:readiness:status")
     # The tag value to check for readiness
     tag_value: str = field(default="ready")
+
+    @property
+    def id(self):
+        return f"{self.enabled}{self.interval_seconds}{self.timeout_seconds}{self.tag_key}{self.tag_value}"
 
     @staticmethod
     def from_dict(item: dict):

@@ -1,27 +1,36 @@
 from abc import ABC, abstractmethod
 from typing import Literal, Union
 
-from app.components.dns.dns_value_resolver_interface import DnsValueResolverInterface
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel
+from app.components.metadata.instance_metadata_interface import InstanceMetadataInterface
+from app.components.metadata.models.metadata_result_model import MetadataResultModel
 from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
 
 
-class DnsValueResolverService(DnsValueResolverInterface, ABC):
-    """Base class for resolving values for DNS records."""
+class InstanceMetadataBaseService(InstanceMetadataInterface, ABC):
+    """Base class for resolving values from instance metadata."""
 
-    def resolve_dns_value(
-        self, sg_config_item: ScalingGroupConfiguration, lifecycle_event: LifecycleEventModel
-    ) -> Union[list[str], None]:
-        """Resolves the value of a DNS record.
+    def resolve_value(
+        self,
+        sg_config_item: ScalingGroupConfiguration,
+        lifecycle_event: LifecycleEventModel,
+    ) -> list[MetadataResultModel]:
+        """Resolves the value(s) from instance(s) metadata.
 
         Args:
-            sg_config_item (ScalingGroupConfiguration): The DNS configuration item.
-            lifecycle_event (LifecycleEventModel): The lifecycle event.
+            sg_config_item (ScalingGroupConfiguration): The scaling group configuration item.
+            lifecycle_event (LifecycleEventModel): The lifecycle event for which to resolve the value.
 
         Returns:
-            Union[list[str], None]: The value of the DNS record.
+            list[MetadataResultModel]: The values resolved.
+
+        Remarks:
+            There are few supported sources for the metadata value:
+            - ip:public - resolves the public IP addresses of the instances.
+            - ip:private - resolves the private IP addresses of the instances.
+            - tag:<tag_name> - resolves the value of the specified tag for the instances.
         """
-        match sg_config_item.value_source.split(":"):
+        match sg_config_item.dns_config.value_source.split(":"):
             case [source, value] if source == "ip":
                 return self.handle_ip_source(sg_config_item, lifecycle_event, value)
             case [source, value] if source == "tag":
@@ -35,7 +44,7 @@ class DnsValueResolverService(DnsValueResolverInterface, ABC):
         sg_config_item: ScalingGroupConfiguration,
         lifecycle_event: LifecycleEventModel,
         ip_type: Literal["public", "private"],
-    ) -> list[str]:
+    ) -> list[MetadataResultModel]:
         """Handle IP source.
 
         Args:
@@ -44,7 +53,7 @@ class DnsValueResolverService(DnsValueResolverInterface, ABC):
             ip_type (str): IP value to use - public or private.
 
         Returns:
-            list[str]: The list of IPs.
+            list[MetadataResultModel]: The list containing information about values resolved.
         """
         pass
 
@@ -54,7 +63,7 @@ class DnsValueResolverService(DnsValueResolverInterface, ABC):
         sg_config_item: ScalingGroupConfiguration,
         lifecycle_event: LifecycleEventModel,
         tag_name: str,
-    ) -> list[str]:
+    ) -> list[MetadataResultModel]:
         """Handle tag source.
 
         Args:
@@ -63,6 +72,6 @@ class DnsValueResolverService(DnsValueResolverInterface, ABC):
             tag_name (str): Name of the tag to resolve value from.
 
         Returns:
-            list[str]: Single value wrapped in a list.
+            list[MetadataResultModel]: The list containing information about values resolved.
         """
         pass

@@ -2,6 +2,7 @@ from app.config.env_configuration_service import EnvironmentConfigurationService
 from app.utils.di import DIContainer
 
 from .distributed_lock_interface import DistributedLockInterface
+from .internal.awaitable_distributed_lock_service import AwaitableDistributedLockService
 from .internal.distributed_lock_service import DistributedLockService
 
 
@@ -11,4 +12,6 @@ def register_services(di_container: DIContainer, env_config_service: Environment
     Args:
         di_container (DIContainer): DI container
     """
-    di_container.register(DistributedLockInterface, DistributedLockService, lifetime="scoped")
+    di_container.register(DistributedLockInterface, DistributedLockService, name="original", lifetime="scoped")
+    # Register decorator service
+    di_container.register(DistributedLockInterface, AwaitableDistributedLockService, lifetime="scoped")

@@ -18,6 +18,7 @@ class DnsRecordConfig(DataclassBase):
 
     # DNS configuration
     provider: DnsRecordProvider = field(default=DnsRecordProvider.ROUTE53)
+    value_source: str = field(default="ip:private")
     dns_zone_id: str = field(default="")
     record_name: str = field(default="")
     record_ttl: int = field(default=60)
@@ -42,6 +43,7 @@ class DnsRecordConfig(DataclassBase):
         """Create a DNS record configuration from a dictionary"""
         return DnsRecordConfig(
             provider=DnsRecordProvider(str(item.get("provider", "route53")).upper()),
+            value_source=str(item.get("value_source", "ip:private")).lower(),
             dns_zone_id=item.get("dns_zone_id", ""),
             record_name=item.get("record_name", ""),
             record_ttl=item.get("record_ttl", 60),

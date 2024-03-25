@@ -64,7 +64,7 @@ class AwsDnsChangeRequestModel(DnsChangeRequestModel):
                 "Name": self.record_name,
                 "Type": self.record_type,
                 "TTL": self.record_ttl,
-                "ResourceRecords": [{"Value": value} for value in self.record_values],
+                "ResourceRecords": [{"Value": value} for value in list(set(self.record_values))],
             },
         }
 

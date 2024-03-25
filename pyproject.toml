@@ -2,7 +2,7 @@
 name = "terraform-aws-asg-dns-discovery"
 version = "0.1.0"
 description = "Terraform AWS plugin allowing to synchronize metadata of EC2 instances launched through AWS Auto Scaling Groups with DNS services like Route53 or Cloudflare."
-authors = ["Alex Tsybouk <tsybouk.alexandr@gmail.com>"]
+authors = ["Alex Tsybouk <alex.tsybouk@gmail.com>"]
 license = "Apache License"
 readme = "README.md"
 package-mode = false

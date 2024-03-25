@@ -60,6 +60,12 @@ def lambda_handler(event: dict, context: Any) -> None:
         logger.warning("No lifecycle transition found in the SNS message. Ignoring...")
         return {"statusCode": 400, "body": "No lifecycle transition found in the SNS message"}
 
+    # Build lifecycle event model
+    try:
+        event: LifecycleEventModel = lifecycle_event_model_factory.create(sns_message)
+    except Exception as e:
+        raise BusinessException(f"Error creating lifecycle event model: {str(e)}") from e
+
     # Looks like we have a lifecycle event, let's handle it
     logger.debug("Initializing lifecycle service handling...")
     try:

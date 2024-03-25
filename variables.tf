@@ -30,20 +30,11 @@ variable "records" {
     # More on states here: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-lifecycle.html
     scaling_group_valid_states = optional(list(string), ["InService"])
 
-    # Value to use as the source for the DNS record. 'ip:private' is default.
-    # Supported values:
-    # * 'ip:public' - will use public IP of the instance
-    # * 'ip:private' - will use private IP of the instance
-    # * 'tag:<tag_name>' - where <tag_name> is the name of the tag to use as the source for the DNS record value.
-    # IMPORTANT:
-    # * If you're using private IPs, your lambda function must be in the same VPC as the ASG(s).
-    value_source = optional(string, "ip:private")
-
     # MULTIVALUE or SINGLE. 'MULTIVALUE' is default.
     # 'MULTIVALUE' - single DNS having multiple IPs:
-    #   beast.example.com -> 12.82.13.83, 12.82.13.84, 12.82.14.80
+    #   subdomain.example.com -> 12.82.13.83, 12.82.13.84, 12.82.14.80
     # 'SINGLE' is DNS updated with latest IP of instance launched
-    #   beast.example.com -> 12.82.13.83
+    #   subdomain.example.com -> 12.82.13.83
     mode = optional(string, "MULTIVALUE")
 
     # ###
@@ -53,12 +44,21 @@ variable "records" {
     dns_config = object({
       # Name of DNS provider. Supported values: 'route53', 'cloudflare'. Default: 'route53'
       provider = optional(string, "route53")
+      # Value to use as the source for the DNS record. 'ip:private' is default.
+      # Supported values:
+      # * 'ip:public' - will use public IP of the instance
+      # * 'ip:private' - will use private IP of the instance
+      # * 'tag:<tag_name>' - where <tag_name> is the name of the tag to use as the source for the DNS record value.
+      # IMPORTANT:
+      # * If you're using private IPs, resolver function must be on the same network as VM.
+      #   For AWS this means lambda being deployed to the same VPC as the ASG(s) it's runnign check against.
+      value_source = optional(string, "ip:private")
       # For AWS - Hosted zone ID of the domain.
       # You can find this in Route53 console.
       dns_zone_id = string
       # Name of the DNS record. If your domain is 'example.com', and you want to
-      # create a DNS record for 'beast.example.com', then the value of this field
-      # should be 'beast'
+      # create a DNS record for 'subdomain.example.com', then the value of this field
+      # should be 'subdomain'
       record_name = string
       # Time to live for DNS record
       record_ttl = optional(number, 60)
@@ -125,7 +125,15 @@ variable "records" {
     # Health check to perform before adding instance to DNS record.
     # Set to null to disable healthcheck overall.
     health_check = optional(object({
-      enabled         = optional(bool, true)
+      enabled = optional(bool, true)
+      # Value to use as the source for the health check. If not provided, then the value from `dns_config.value_source` will be used.
+      # Supported values:
+      # * 'ip:public' - will use public IP of the instance
+      # * 'ip:private' - will use private IP of the instance
+      # * 'tag:<tag_name>' - where <tag_name> is the name of the tag to use as the source for the DNS record value.
+      # IMPORTANT:
+      # * Ensure that the health check source is accessible from the resolver function (for AWS - from Lambda).
+      endpoint_source = optional(string, "ip:private")
       path            = optional(string, "")
       port            = number
       protocol        = string

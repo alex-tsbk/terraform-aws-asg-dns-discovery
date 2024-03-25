@@ -5,7 +5,11 @@ from app.utils.logging import get_logger
 class BusinessException(Exception):
     """Encapsulates an exception that is a business error"""
 
-    pass
+    def __init__(self, message, *args, **kwargs):
+        super().__init__(message, *args, **kwargs)
+        self.logger = get_logger()
+        self.message = message
+        self.logger.error(f"Business exception: {message}", exc_info=True)
 
 
 class CloudProviderException(Exception):

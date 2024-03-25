@@ -33,8 +33,6 @@ class ScalingGroupConfiguration(DataclassBase):
     scaling_group_name: str
     # Valid states for the Scaling Group
     scaling_group_valid_states: list[str] = field(default_factory=list)
-    # Specifies what to use as a value source for DNS record
-    value_source: str = field(default="ip:private")
     # Specifies mode of how DNS records should be mapped
     mode: DnsRecordMappingMode = field(default=DnsRecordMappingMode.MULTIVALUE)
     # DNS configuration
@@ -47,6 +45,7 @@ class ScalingGroupConfiguration(DataclassBase):
     def __post_init__(self):
         if not self.scaling_group_name:
             raise ValueError("ASG name is required")
+        # Assign default valid states if not provided
         if not self.scaling_group_valid_states:
             self.scaling_group_valid_states = ["InService"]
 
@@ -94,7 +93,7 @@ class ScalingGroupConfiguration(DataclassBase):
             str: Lock key composed of ASG name, hosted zone id, record name and record type
         """
         # Format: {asg_name}-{hosted_zone_id}-{record_name}-{record_type}
-        key = f"{self.scaling_group_name}-{self.dns_zone_id}-{self.record_name}-{self.record_type}"
+        key = f"{self.scaling_group_name}-{self.dns_config.dns_zone_id}-{self.dns_config.record_name}-{self.dns_config.record_type}"
         return key
 
     @staticmethod
@@ -102,7 +101,6 @@ class ScalingGroupConfiguration(DataclassBase):
         kwargs = {
             "scaling_group_name": item.get("scaling_group_name"),
             "scaling_group_valid_states": item.get("scaling_group_valid_states", ["InService"]),
-            "value_source": item.get("value_source", "ip:private").lower(),
             "mode": DnsRecordMappingMode.from_str(item.get("mode", "MULTIVALUE")),
             "dns_config": DnsRecordConfig.from_dict(item.get("dns_config", {})),
         }

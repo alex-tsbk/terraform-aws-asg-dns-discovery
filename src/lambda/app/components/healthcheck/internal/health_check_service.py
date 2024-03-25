@@ -3,6 +3,7 @@ import urllib.request
 
 from app.components.healthcheck.health_check_interface import HealthCheckInterface
 from app.components.healthcheck.models.health_check_result_model import HealthCheckResultModel
+from app.components.metadata.instance_metadata_interface import InstanceMetadataInterface
 from app.config.models.health_check_config import HealthCheckProtocol
 from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
 from app.utils.logging import get_logger
@@ -11,8 +12,9 @@ from app.utils.logging import get_logger
 class HealthCheckService(HealthCheckInterface):
     """Service for performing health check."""
 
-    def __init__(self):
+    def __init__(self, metadata_service: InstanceMetadataInterface):
         self.logger = get_logger()
+        self.metadata_service = metadata_service
 
     def check(self, destination: str, sg_dns_config: ScalingGroupConfiguration) -> HealthCheckResultModel:
         """
@@ -27,6 +29,7 @@ class HealthCheckService(HealthCheckInterface):
             HealthCheckResultModel: The model that represents the result of the health check.
         """
         protocol: HealthCheckProtocol = sg_dns_config.health_check_config.protocol
+        endpoint_source: str = sg_dns_config.health_check_config.endpoint_source
         port: int = sg_dns_config.health_check_config.port
         path: str = sg_dns_config.health_check_config.path
         timeout_seconds: int = sg_dns_config.health_check_config.timeout_seconds

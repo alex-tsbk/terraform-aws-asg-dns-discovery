@@ -10,7 +10,7 @@ from app.utils.dataclass import DataclassBase
 
 
 class EnvironmentConfigurationService:
-    """Service class for resolving ASG DNS configuration"""
+    """Service class for resolving application configuration from environment variables"""
 
     def __init__(self):
         # Cache placeholders
@@ -72,10 +72,7 @@ class EnvironmentConfigurationService:
             metrics_provider = os.environ.get("monitoring_metrics_provider", "cloudwatch")
             metrics_namespace = os.environ.get("monitoring_metrics_namespace", "")
             alarms_enabled = str(os.environ.get("monitoring_alarms_enabled", "false")).lower() == "true"
-            alarms_notification_destination = os.environ.get(
-                "monitoring_alarms_notification_destination",
-                "",
-            )
+            alarms_notification_destination = os.environ.get("monitoring_alarms_notification_destination", "")
             return MetricsConfig(
                 metrics_enabled=metrics_enabled,
                 metrics_provider=metrics_provider,
