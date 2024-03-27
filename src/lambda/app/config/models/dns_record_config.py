@@ -4,6 +4,27 @@ from enum import Enum
 from app.utils.dataclass import DataclassBase
 
 
+class DnsRecordMappingMode(Enum):
+    """Enum representing the DNS record mapping modes"""
+
+    # MULTIVALUE: Multiple records are created for the same record name.
+    #   Example: domain.com resolves to multiple IP addresses, thus having multiple A records,
+    #   single A record with multiple IP addresses, etc.
+    # This is the default mode.
+    MULTIVALUE = "MULTIVALUE"
+    # SINGLE: Single record is created for the same record name.
+    # Value is resolved to the most-recent Instance in Scaling Group that matches readiness/health check.
+    #   Example: domain.com resolves to a single IP address, thus having a single A record with single value.
+    SINGLE = "SINGLE"
+
+    @staticmethod
+    def from_str(label: str):
+        """Returns the DNS record mapping mode from the label"""
+        if not hasattr(DnsRecordMappingMode, label.upper()):
+            raise NotImplementedError(f"Unsupported mode: {label}")
+        return DnsRecordMappingMode[label.upper()]
+
+
 class DnsRecordProvider(Enum):
     """DNS record provider"""
 
@@ -19,6 +40,8 @@ class DnsRecordConfig(DataclassBase):
     # DNS configuration
     provider: DnsRecordProvider = field(default=DnsRecordProvider.ROUTE53)
     value_source: str = field(default="ip:private")
+    # Specifies mode of how DNS records should be mapped
+    mode: DnsRecordMappingMode = field(default=DnsRecordMappingMode.MULTIVALUE)
     dns_zone_id: str = field(default="")
     record_name: str = field(default="")
     record_ttl: int = field(default=60)
@@ -38,12 +61,30 @@ class DnsRecordConfig(DataclassBase):
         if self.record_ttl < 1 or self.record_ttl > 604800:
             raise ValueError(f"Invalid record TTL: {self.record_ttl}")
 
+        RECORDS_SUPPORTING_MULTIVALUE = [
+            "A",
+            "AAAA",
+            "MX",
+            "TXT",
+            "PTR",
+            "SRV",
+            "SPF",
+            "NAPTR",
+            "CAA",
+        ]
+
+        if self.mode == DnsRecordMappingMode.MULTIVALUE and self.record_type not in RECORDS_SUPPORTING_MULTIVALUE:
+            raise ValueError(
+                f"Invalid record type: {self.record_type} - for mode {self.mode.value}: only {RECORDS_SUPPORTING_MULTIVALUE} are supported"
+            )
+
     @staticmethod
     def from_dict(item: dict) -> "DnsRecordConfig":
         """Create a DNS record configuration from a dictionary"""
         return DnsRecordConfig(
-            provider=DnsRecordProvider(str(item.get("provider", "route53")).upper()),
+            provider=DnsRecordProvider(str(item.get("provider", DnsRecordProvider.ROUTE53.value)).upper()),
             value_source=str(item.get("value_source", "ip:private")).lower(),
+            mode=DnsRecordMappingMode(str(item.get("mode", DnsRecordMappingMode.MULTIVALUE.value)).upper()),
             dns_zone_id=item.get("dns_zone_id", ""),
             record_name=item.get("record_name", ""),
             record_ttl=item.get("record_ttl", 60),

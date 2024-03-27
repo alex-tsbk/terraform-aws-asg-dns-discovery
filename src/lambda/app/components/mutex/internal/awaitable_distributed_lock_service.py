@@ -6,9 +6,7 @@ from app.utils.logging import get_logger
 
 
 class AwaitableDistributedLockService(DistributedLockInterface):
-    """Decorator service for acquiring and releasing shared state resource locks.
-    Will attempt to acquire lock with incremental backoff.
-    """
+    """Decorator implementation of service for acquiring and releasing shared state resource locks."""
 
     def __init__(
         self, distributed_lock_service: NamedDependency[DistributedLockInterface, "original"]  # noqa: F821
@@ -20,10 +18,11 @@ class AwaitableDistributedLockService(DistributedLockInterface):
         return self.distributed_lock_service.check_lock(resource_id)
 
     def acquire_lock(self, resource_id: str) -> bool:
-        """Acquires lock for the resource
+        """Acquires lock for the resource.
+        Will attempt to acquire lock with incremental backoff ( up to ~1 minute).
 
         Args:
-            lock_key (str): Lock key
+            resource_id (str): Resource ID that uniquely identifies the resource lock is to be acquired on.
 
         Returns:
             bool: True if lock is acquired, False otherwise

@@ -5,7 +5,8 @@ from app.components.dns.models.dns_change_response_model import DnsChangeRespons
 from app.components.lifecycle.models.lifecycle_event_model import LifecycleEventModel, LifecycleTransition
 from app.components.metadata.instance_metadata_interface import InstanceMetadataInterface
 from app.components.metadata.models.metadata_result_model import MetadataResultModel
-from app.config.models.scaling_group_dns_config import DnsRecordMappingMode, ScalingGroupConfiguration
+from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
+from app.config.models.dns_record_config import DnsRecordMappingMode
 from app.infrastructure.aws.route53_service import Route53Service
 from app.utils.logging import get_logger
 from app.utils.serialization import to_json
@@ -184,10 +185,10 @@ class AwsDnsManagementService(DnsManagementInterface):
         action = DnsChangeRequestAction.CREATE if not record else DnsChangeRequestAction.UPDATE
         # Determine the record values based on the mapping mode
         record_values = None
-        if sg_config_item.mode == DnsRecordMappingMode.MULTIVALUE:
+        if sg_config_item.dns_config.mode == DnsRecordMappingMode.MULTIVALUE:
             record_values = resolved_values_destinations
 
-        if sg_config_item.mode == DnsRecordMappingMode.SINGLE:
+        if sg_config_item.dns_config.mode == DnsRecordMappingMode.SINGLE:
             record_values = [next(sorted(resolved_values, key=lambda x: x.instance_launch_timestamp, reverse=True))]
 
         if record_values is None:

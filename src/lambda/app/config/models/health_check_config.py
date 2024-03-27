@@ -6,7 +6,7 @@ class HealthCheckProtocol(Enum):
     """Describes supported protocols used for health checks on an EC2 instance.
 
     Raises:
-        NotImplementedError: When an unsupported protocol is requested.
+        ValueError: When an unsupported protocol is requested.
     """
 
     TCP = "TCP"
@@ -17,7 +17,7 @@ class HealthCheckProtocol(Enum):
     def from_str(label: str):
         """Returns the DNS record mapping mode from the label"""
         if not hasattr(HealthCheckProtocol, label.upper()):
-            raise NotImplementedError(f"Unsupported protocol: {label}")
+            raise ValueError(f"Unsupported protocol: {label}")
         return HealthCheckProtocol[label.upper()]
 
 
@@ -31,7 +31,6 @@ class HealthCheckConfig:
         ValueError: When the health check path is missing for HTTP(S) health checks.
     """
 
-    # The interval in seconds to check the health of the instance
     enabled: bool = field(default=False)
     # The value source of the endpoint to resolve heath check endpoint from.
     # Supported values: ip:private, ip:public, tag:<tag_key>:<tag_value>
@@ -39,6 +38,7 @@ class HealthCheckConfig:
     path: str = field(default="")
     port: int = field(default=0)
     protocol: HealthCheckProtocol = field(default=HealthCheckProtocol.HTTP)
+    # The interval in seconds to check the health of the instance
     timeout_seconds: int = field(default=5)
 
     def __post_init__(self):
@@ -72,7 +72,7 @@ class HealthCheckConfig:
             enabled=str(data.get("enabled", False)).lower() == "true",
             endpoint_source=data.get("endpoint_source", "ip:private"),
             path=data.get("path", ""),
-            port=data.get("port", 80),
-            protocol=HealthCheckProtocol.from_str(data.get("protocol", "HTTP").upper()),
+            port=int(data.get("port", "")),
+            protocol=HealthCheckProtocol.from_str(str(data.get("protocol", HealthCheckProtocol.HTTP.value)).upper()),
             timeout_seconds=data.get("timeout_seconds", 5),
         )

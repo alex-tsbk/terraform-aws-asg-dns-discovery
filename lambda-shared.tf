@@ -11,11 +11,11 @@ locals {
     log_identifier = var.lambda_settings.log_identifier
     log_level      = var.lambda_settings.log_level
     # Readiness check
-    instance_readiness_enabled          = var.instance_readiness.enabled
-    instance_readiness_interval_seconds = var.instance_readiness.interval_seconds
-    instance_readiness_timeout_seconds  = max(min(var.instance_readiness.timeout_seconds, var.lambda_settings.timeout_seconds), var.instance_readiness.interval_seconds)
-    instance_readiness_tag_key          = var.instance_readiness.tag_key
-    instance_readiness_tag_value        = var.instance_readiness.tag_value
+    instance_readiness_enabled          = var.instance_readiness_default.enabled
+    instance_readiness_interval_seconds = var.instance_readiness_default.interval_seconds
+    instance_readiness_timeout_seconds  = max(min(var.instance_readiness_default.timeout_seconds, var.lambda_settings.timeout_seconds), var.instance_readiness.interval_seconds)
+    instance_readiness_tag_key          = var.instance_readiness_default.tag_key
+    instance_readiness_tag_value        = var.instance_readiness_default.tag_value
     # Configuration for database. Used for distributed locking and retrieval of configuration items.
     db_provider           = "dynamodb"
     db_table_name         = aws_dynamodb_table.dns_discovery_state_lock_table.name

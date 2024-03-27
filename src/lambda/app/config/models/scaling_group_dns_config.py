@@ -7,22 +7,19 @@ from app.config.models.readiness_config import ReadinessConfig
 from app.utils.dataclass import DataclassBase
 
 
-class DnsRecordMappingMode(Enum):
-    """Enum representing the DNS record mapping modes"""
+class ScalingGroupProceedMode(Enum):
+    """Describes the proceed mode for the Scaling Group when ASG has multiple DNS configurations"""
 
-    # MULTIVALUE: Multiple records are created for the same record name.
-    #   Example: domain.com resolves to multiple IP addresses
-    MULTIVALUE = "MULTIVALUE"
-    # SINGLE: Single record is created for the same record name.
-    #   Example: domain.com resolves to a single IP address
-    SINGLE = "SINGLE"
-
-    @staticmethod
-    def from_str(label: str):
-        """Returns the DNS record mapping mode from the label"""
-        if not hasattr(DnsRecordMappingMode, label.upper()):
-            raise NotImplementedError(f"Unsupported mode: {label}")
-        return DnsRecordMappingMode[label.upper()]
+    # When ASG has multiple DNS configurations, proceed with applying changes only if all other configurations
+    # for the same ASG are considered 'ready' and 'healthy'.
+    ALL_OPERATIONAL = "ALL_OPERATIONAL"
+    # When ASG has multiple DNS configurations, proceed with applying changes if current configuration
+    # is considered 'ready' and 'healthy'.
+    SELF_OPERATIONAL = "SELF_OPERATIONAL"
+    # When ASG has multiple DNS configurations, proceed with applying changes if at more than 50% of configurations
+    # for the same ASG are considered 'ready' and 'healthy'. If there are 2 configurations, at least 1 configuration
+    # should be considered 'ready' and 'healthy' (50%).
+    MAJORITY_OPERATIONAL = "MAJORITY_OPERATIONAL"
 
 
 @dataclass
@@ -33,8 +30,9 @@ class ScalingGroupConfiguration(DataclassBase):
     scaling_group_name: str
     # Valid states for the Scaling Group
     scaling_group_valid_states: list[str] = field(default_factory=list)
-    # Specifies mode of how DNS records should be mapped
-    mode: DnsRecordMappingMode = field(default=DnsRecordMappingMode.MULTIVALUE)
+    # Describes how to proceed with changes for the situations when Scaling Group
+    # has multiple DNS configurations
+    multiple_config_proceed_mode: ScalingGroupProceedMode = field(default=ScalingGroupProceedMode.ALL_OPERATIONAL)
     # DNS configuration
     dns_config: DnsRecordConfig = field(default_factory=DnsRecordConfig)
     # Health check configuration
@@ -48,26 +46,6 @@ class ScalingGroupConfiguration(DataclassBase):
         # Assign default valid states if not provided
         if not self.scaling_group_valid_states:
             self.scaling_group_valid_states = ["InService"]
-
-        RECORDS_SUPPORTING_MULTIVALUE = [
-            "A",
-            "AAAA",
-            "MX",
-            "TXT",
-            "PTR",
-            "SRV",
-            "SPF",
-            "NAPTR",
-            "CAA",
-        ]
-
-        if (
-            self.mode == DnsRecordMappingMode.MULTIVALUE
-            and self.dns_config.record_type not in RECORDS_SUPPORTING_MULTIVALUE
-        ):
-            raise ValueError(
-                f"Invalid record type: {self.dns_config.record_type} - for mode {self.mode.value}: only {RECORDS_SUPPORTING_MULTIVALUE} are supported"
-            )
 
     def __str__(self) -> str:
         return f"ASG Config:({self.scaling_group_name}/{self.dns_config.dns_zone_id}/{self.dns_config.record_name}/{self.dns_config.record_type})"
@@ -101,9 +79,13 @@ class ScalingGroupConfiguration(DataclassBase):
         kwargs = {
             "scaling_group_name": item.get("scaling_group_name"),
             "scaling_group_valid_states": item.get("scaling_group_valid_states", ["InService"]),
-            "mode": DnsRecordMappingMode.from_str(item.get("mode", "MULTIVALUE")),
             "dns_config": DnsRecordConfig.from_dict(item.get("dns_config", {})),
         }
+        # Optional fields
+        if "multiple_config_proceed_mode" in item:
+            kwargs["multiple_config_proceed_mode"] = ScalingGroupProceedMode(
+                str(item["multiple_config_proceed_mode"]).upper()
+            )
         # Only create health check config if it's present in the config
         health_check_config = item.get("health_check_config", {})
         if health_check_config:
