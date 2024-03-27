@@ -9,9 +9,9 @@ class MetadataResultModel(DataclassBase):
 
     # Instance id
     instance_id: str
-    # Instance launch timestamp (epoch)
-    instance_launch_timestamp: int
     # Value resolved
     value: str
+    # Instance launch timestamp (epoch)
+    instance_launch_timestamp: int = field(default=0)
     # Source of the value
     source: str = field(default="")

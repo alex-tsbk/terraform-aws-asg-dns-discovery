@@ -2,8 +2,10 @@ import socket
 import urllib.request
 
 from app.components.healthcheck.health_check_interface import HealthCheckInterface
-from app.components.healthcheck.models.health_check_result_model import HealthCheckResultModel
-from app.components.metadata.instance_metadata_interface import InstanceMetadataInterface
+from app.components.healthcheck.models.health_check_result_model import (
+    HealthCheckResultModel,
+    EndpointHealthCheckResultModel,
+)
 from app.config.models.health_check_config import HealthCheckProtocol
 from app.config.models.scaling_group_dns_config import ScalingGroupConfiguration
 from app.utils.logging import get_logger
@@ -12,9 +14,8 @@ from app.utils.logging import get_logger
 class HealthCheckService(HealthCheckInterface):
     """Service for performing health check."""
 
-    def __init__(self, metadata_service: InstanceMetadataInterface):
+    def __init__(self):
         self.logger = get_logger()
-        self.metadata_service = metadata_service
 
     def check(self, destination: str, sg_dns_config: ScalingGroupConfiguration) -> HealthCheckResultModel:
         """
@@ -29,7 +30,6 @@ class HealthCheckService(HealthCheckInterface):
             HealthCheckResultModel: The model that represents the result of the health check.
         """
         protocol: HealthCheckProtocol = sg_dns_config.health_check_config.protocol
-        endpoint_source: str = sg_dns_config.health_check_config.endpoint_source
         port: int = sg_dns_config.health_check_config.port
         path: str = sg_dns_config.health_check_config.path
         timeout_seconds: int = sg_dns_config.health_check_config.timeout_seconds
@@ -66,14 +66,26 @@ class HealthCheckService(HealthCheckInterface):
         try:
             result = sock.connect_ex((ip, port))
             return HealthCheckResultModel(
-                healthy=result == 0,
+                [
+                    EndpointHealthCheckResultModel(
+                        healthy=result == 0,
+                        protocol="TCP",
+                        endpoint=f"{ip}:{port}",
+                    )
+                ]
             )
         except socket.error as e:
             msg = f"Socket error: {e}"
             self.logger.error(msg)
             return HealthCheckResultModel(
-                healthy=False,
-                message=msg,
+                [
+                    EndpointHealthCheckResultModel(
+                        healthy=False,
+                        protocol="TCP",
+                        endpoint=f"{ip}:{port}",
+                        message=msg,
+                    )
+                ]
             )
         finally:
             sock.close()
@@ -104,7 +116,15 @@ class HealthCheckService(HealthCheckInterface):
         try:
             response = urllib.request.urlopen(url, timeout=timeout_seconds)
             return HealthCheckResultModel(
-                healthy=response.getcode() == 200,
+                [
+                    EndpointHealthCheckResultModel(
+                        healthy=response.getcode() == 200,
+                        endpoint=ip,
+                        protocol=scheme,
+                        status=response.getcode(),
+                        time_taken_s=response.getheader("X-Response-Time", 0),
+                    )
+                ]
             )
         except Exception as e:
             self.logger.error(f"HTTP check failed: {e}")

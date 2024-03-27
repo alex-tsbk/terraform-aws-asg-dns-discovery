@@ -3,7 +3,7 @@ from dataclasses import asdict, dataclass, field
 from app.utils.dataclass import DataclassBase
 
 
-@dataclass(frozen=True)
+@dataclass
 class ReadinessConfig(DataclassBase):
     # When set to true, the readiness check is enabled
     enabled: bool = field(default=False)

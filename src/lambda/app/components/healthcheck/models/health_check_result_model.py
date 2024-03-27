@@ -13,12 +13,12 @@ class EndpointHealthCheckResultModel(DataclassBase):
         One way is to proceed only with healthy endpoints, ignoring unhealthy.
     """
 
-    # Endpoint that was checked
-    endpoint: str
     # Whether the endpoint is healthy
-    healthy: bool = False
+    healthy: bool
+    # Endpoint that was checked
+    endpoint: str = field(default="")
     # Instance id
-    instance_id: str
+    instance_id: str = field(default="")
     # Protocol used for the health check
     protocol: str = field(default="")
     # Status of the health check. Optional.
@@ -46,7 +46,7 @@ class HealthCheckResultModel(DataclassBase):
         return f"Healthy: {self.healthy}, Endpoints: {', '.join([str(endpoint) for endpoint in self.endpoints])}"
 
     def __bool__(self) -> bool:
-        return self.endpoints and all([endpoint.healthy for endpoint in self.endpoints])
+        return len(self.endpoints) > 0 and all([endpoint.healthy for endpoint in self.endpoints])
 
     def __eq__(self, other: "HealthCheckResultModel") -> bool:
         if not isinstance(other, HealthCheckResultModel):
@@ -60,4 +60,4 @@ class HealthCheckResultModel(DataclassBase):
         Args:
             endpoints (list[EndpointHealthCheckResultModel]], optional): The endpoints tested and their health status. Defaults to None.
         """
-        return cls(healthy=False, endpoints=endpoints or [])
+        return cls(endpoints=endpoints or [])
